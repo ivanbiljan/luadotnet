@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="NLdr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+        <HintPath>..\..\refs\NLdr.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
+    </ItemGroup>
+
+</Project>
