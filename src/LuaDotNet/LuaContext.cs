@@ -37,10 +37,9 @@ namespace LuaDotNet
         /// <returns>The chunk's results.</returns>
         public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
         {
-            LuaErrorCodes errorCode;
-            if ((errorCode =
-                    (LuaErrorCodes) LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))
-                ) != LuaErrorCodes.LuaOk)
+            LuaErrorCode errorCode;
+            if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) !=
+                LuaErrorCode.LuaOk)
             {
                 // Lua pushes an error message in case of errors
                 var errorMessage = (string) _objectMarshal.GetObject(State, -1);
@@ -97,8 +96,9 @@ namespace LuaDotNet
 
             // Adjust the number of results to avoid errors
             numberOfResults = numberOfResults < -1 ? -1 : numberOfResults;
-            LuaErrorCodes errorCode;
-            if ((errorCode = (LuaErrorCodes) LuaModule.Instance.LuaPCallK(State, arguments?.Length ?? 0, numberOfResults)) != LuaErrorCodes.LuaOk)
+            LuaErrorCode errorCode;
+            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Length ?? 0, numberOfResults)) !=
+                LuaErrorCode.LuaOk)
             {
                 // Lua pushes an error message in case of errors
                 var errorMessage = (string) _objectMarshal.GetObject(State, -1);

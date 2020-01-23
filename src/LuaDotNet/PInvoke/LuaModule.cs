@@ -76,7 +76,7 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunction("luaL_loadstring")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate int LuaLLoadString(IntPtr luaState, [In] byte[] stringBytes);
+            public delegate LuaErrorCode LuaLLoadString(IntPtr luaState, [In] byte[] stringBytes);
 
             [UnmanagedFunction("luaL_newstate")]
             [SuppressUnmanagedCodeSecurity]
@@ -91,7 +91,8 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunction("lua_pcallk")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate int LuaPCallK(IntPtr luaState, int numberOfArguments, int numberOfResults = LuaMultRet,
+            public delegate LuaErrorCode LuaPCallK(IntPtr luaState, int numberOfArguments,
+                int numberOfResults = LuaMultRet,
                 int messageHandler = 0, IntPtr context = default(IntPtr),
                 IntPtr continuationFunction = default(IntPtr));
 

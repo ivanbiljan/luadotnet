@@ -13,6 +13,14 @@ namespace Tests
             Assert.AreNotEqual(IntPtr.Zero, lua.State);
         }
 
+        [Test]
+        public void DoString_IsCorrect()
+        {
+            var lua = new LuaContext();
+            var result = lua.DoString("return 5")[0];
+            Assert.AreEqual(5, result);
+        }
+
         [TestCase("str", "Hello, World")]
         [TestCase("bool", true)]
         [TestCase("integer", -123456L)]
@@ -23,14 +31,6 @@ namespace Tests
             var lua = new LuaContext();
             lua.SetGlobal(global, value);
             Assert.AreEqual(value, lua.GetGlobal(global));
-        }
-
-        [Test]
-        public void DoString_IsCorrect()
-        {
-            var lua = new LuaContext();
-            var result = lua.DoString("return 5")[0];
-            Assert.AreEqual(5, result);
         }
     }
 }

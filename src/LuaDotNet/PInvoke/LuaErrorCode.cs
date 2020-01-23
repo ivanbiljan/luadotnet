@@ -5,7 +5,7 @@ namespace LuaDotNet.PInvoke
     /// <summary>
     ///     Specifies a Lua error code.
     /// </summary>
-    public enum LuaErrorCodes
+    public enum LuaErrorCode
     {
         /// <summary>
         ///     Represents the normal status for a thread. When resuming threads with <see cref="LUA_OK" /> a new coroutine is
