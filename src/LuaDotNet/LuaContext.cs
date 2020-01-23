@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Text;
+using LuaDotNet.Exceptions;
+using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
@@ -24,6 +27,29 @@ namespace LuaDotNet
         ///     Gets the Lua state associated with this context.
         /// </summary>
         public IntPtr State { get; }
+
+        /// <summary>
+        ///     Executes the specified Lua chunk and returns the results.
+        /// </summary>
+        /// <param name="luaState">The Lua state pointer.</param>
+        /// <param name="luaChunk">The Lua chunk to execute, which must not be <c>null</c>.</param>
+        /// <param name="numberOfResults">The number of results to return.</param>
+        /// <returns>The chunk's results.</returns>
+        public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
+        {
+            LuaErrorCodes errorCode;
+            if ((errorCode =
+                    (LuaErrorCodes) LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))
+                ) != LuaErrorCodes.LuaOk)
+            {
+                // Lua pushes an error message in case of errors
+                var errorMessage = (string) _objectMarshal.GetObject(State, -1);
+                LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
+                throw new LuaException($"[{errorCode}]: {errorMessage}");
+            }
+
+            return CallWithArguments(numberOfResults: numberOfResults);
+        }
 
         /// <summary>
         ///     Returns the value of a global variable with the specified name.
@@ -53,6 +79,43 @@ namespace LuaDotNet
         {
             _objectMarshal.PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
+        }
+
+        private object[] CallWithArguments(object[] arguments = null, int numberOfResults = LuaModule.LuaMultRet)
+        {
+            // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
+            var stackTop = LuaModule.Instance.LuaGetTop(State) - 1;
+
+            // The function is already on the stack so the only thing left to do is push the arguments in direct order
+            if (arguments != null)
+            {
+                foreach (var argument in arguments)
+                {
+                    _objectMarshal.PushToStack(State, argument);
+                }
+            }
+
+            // Adjust the number of results to avoid errors
+            numberOfResults = numberOfResults < -1 ? -1 : numberOfResults;
+            LuaErrorCodes errorCode;
+            if ((errorCode = (LuaErrorCodes) LuaModule.Instance.LuaPCallK(State, arguments?.Length ?? 0, numberOfResults)) != LuaErrorCodes.LuaOk)
+            {
+                // Lua pushes an error message in case of errors
+                var errorMessage = (string) _objectMarshal.GetObject(State, -1);
+                LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
+                throw new LuaException(
+                    $"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
+            }
+
+            var newStackTop = LuaModule.Instance.LuaGetTop(State);
+            var results = new object[newStackTop - stackTop];
+            for (var i = newStackTop; i > stackTop; --i) // Results are also pushed in direct order
+            {
+                results[i - stackTop - 1] = _objectMarshal.GetObject(State, i);
+            }
+
+            LuaModule.Instance.LuaSetTop(State, stackTop);
+            return results;
         }
     }
 }

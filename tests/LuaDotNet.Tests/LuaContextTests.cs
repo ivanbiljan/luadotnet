@@ -24,5 +24,13 @@ namespace Tests
             lua.SetGlobal(global, value);
             Assert.AreEqual(value, lua.GetGlobal(global));
         }
+
+        [Test]
+        public void DoString_IsCorrect()
+        {
+            var lua = new LuaContext();
+            var result = lua.DoString("return 5")[0];
+            Assert.AreEqual(5, result);
+        }
     }
 }

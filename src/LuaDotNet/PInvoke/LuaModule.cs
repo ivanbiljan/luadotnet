@@ -11,6 +11,8 @@ namespace LuaDotNet.PInvoke
 {
     internal sealed class LuaModule : NativeLibrary
     {
+        public const int LuaMultRet = -1;
+
         static LuaModule()
         {
             var runtimesDirectory =
@@ -71,6 +73,11 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate bool LuaIsInteger(IntPtr luaState, int stackIndex);
 
+            [UnmanagedFunction("luaL_loadstring")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaLLoadString(IntPtr luaState, [In] byte[] stringBytes);
+
             [UnmanagedFunction("luaL_newstate")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
@@ -80,6 +87,13 @@ namespace LuaDotNet.PInvoke
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate int LuaNext(IntPtr luaState, int tableIndex);
+
+            [UnmanagedFunction("lua_pcallk")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaPCallK(IntPtr luaState, int numberOfArguments, int numberOfResults = LuaMultRet,
+                int messageHandler = 0, IntPtr context = default(IntPtr),
+                IntPtr continuationFunction = default(IntPtr));
 
             [UnmanagedFunction("lua_pushboolean")]
             [SuppressUnmanagedCodeSecurity]
@@ -180,6 +194,8 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaRawSetI LuaRawSetI;
         public FunctionSignatures.LuaSetTop LuaSetTop;
         public FunctionSignatures.LuaNext LuaNext;
+        public FunctionSignatures.LuaPCallK LuaPCallK;
+        public FunctionSignatures.LuaLLoadString LuaLLoadString;
 #pragma warning restore 649
     }
 }

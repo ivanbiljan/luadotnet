@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
@@ -8,6 +7,7 @@ using LuaDotNet.PInvoke;
 namespace LuaDotNet.Marshalling
 {
     // TODO: Is the LuaContext dependency (absolutely) necessary? --> Guess not
+    // TODO: Use ObjectMarshal pools like NLua does?
 
     internal sealed class ObjectMarshal
     {
