@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace Tests
 {
-    public class Tests
+    public class LuaContextTests
     {
         [Test]
         public void Constructor_IsCorrect()
@@ -13,18 +13,15 @@ namespace Tests
             Assert.AreNotEqual(IntPtr.Zero, lua.State);
         }
 
-        [SetUp]
-        public void Setup()
-        {
-        }
-
-        [Test]
-        public void Test1()
+        [TestCase("str", "Hello, World")]
+        [TestCase("bool", true)]
+        [TestCase("integer", -123456L)]
+        [TestCase("float", 123.456)]
+        public void GetSetGlobal_IsCorrect(string global, object value)
         {
             var lua = new LuaContext();
-            lua.SetGlobal("test", "Hello, World");
-            Assert.AreEqual("Hello, World", lua.GetGlobal("test"));
-            //Assert.Pass();
+            lua.SetGlobal(global, value);
+            Assert.AreEqual(value, lua.GetGlobal(global));
         }
     }
 }

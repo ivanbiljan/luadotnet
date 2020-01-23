@@ -10,10 +10,20 @@ namespace LuaDotNet.Marshalling
     {
         private readonly LuaContext _lua;
 
-        private readonly IDictionary<Type, ITypeParser> _typeParsers = new Dictionary<Type, ITypeParser>
+        private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
         {
-            [typeof(string)] = new StringParser(),
-            [typeof(long)] = new NumberParser() // This works for both integers and floating-point numbers
+            [typeof(string)] = () => new StringParser(),
+            [typeof(sbyte)] = () => new NumberParser(),
+            [typeof(byte)] = () => new NumberParser(),
+            [typeof(short)] = () => new NumberParser(),
+            [typeof(int)] = () => new NumberParser(),
+            [typeof(long)] = () => new NumberParser(),
+            [typeof(ushort)] = () => new NumberParser(),
+            [typeof(uint)] = () => new NumberParser(),
+            [typeof(ulong)] = () => new NumberParser(),
+            [typeof(float)] = () => new NumberParser(),
+            [typeof(double)] = () => new NumberParser(),
+            [typeof(bool)] = () => new BooleanParser()
         };
 
         public ObjectMarshal(LuaContext lua)
@@ -24,11 +34,6 @@ namespace LuaDotNet.Marshalling
         public object GetObject(int stackIndex)
         {
             var luaType = LuaModule.Instance.LuaType(_lua.State, stackIndex);
-            if (luaType == LuaType.String)
-            {
-                return _typeParsers[typeof(string)].Parse(_lua.State, stackIndex);
-            }
-
             var objectType = typeof(object);
             switch (luaType)
             {
@@ -57,7 +62,7 @@ namespace LuaDotNet.Marshalling
                     throw new ArgumentOutOfRangeException();
             }
 
-            var parser = _typeParsers.GetValueOrDefault(objectType);
+            var parser = _typeParsers.GetValueOrDefault(objectType)();
             if (parser == null)
             {
                 throw new LuaException($"Missing parser for type '{objectType.Name}'");
@@ -75,7 +80,7 @@ namespace LuaDotNet.Marshalling
             }
 
             var objType = obj.GetType();
-            var parser = _typeParsers[objType];
+            var parser = _typeParsers[objType]();
             if (parser == null)
             {
                 throw new LuaException($"Missing parser for type '{objType.Name}'");
@@ -86,7 +91,12 @@ namespace LuaDotNet.Marshalling
 
         public void RegisterTypeParser(Type type, ITypeParser typeParser)
         {
-            _typeParsers[type] = typeParser ?? throw new ArgumentNullException(nameof(typeParser));
+            if (typeParser == null)
+            {
+                throw new ArgumentNullException(nameof(typeParser));
+            }
+            
+            _typeParsers[type] = () => typeParser;
         }
     }
 }
