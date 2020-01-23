@@ -35,6 +35,10 @@ namespace LuaDotNet.PInvoke
 
         public bool LuaIsString(IntPtr state, int stackIndex) => LuaType(state, stackIndex) == PInvoke.LuaType.String;
 
+        public bool LuaIsTable(IntPtr state, int stackIndex) => LuaType(state, stackIndex) == PInvoke.LuaType.Table;
+
+        public void LuaPop(IntPtr state, int numberOfElements) => LuaSetTop(state, -numberOfElements - 1);
+
         internal static class FunctionSignatures
         {
             [SuppressUnmanagedCodeSecurity]
@@ -46,10 +50,21 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate void LuaClose(IntPtr luaState);
 
+            [UnmanagedFunction("lua_createtable")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaCreateTable(IntPtr luaState, int numberOfSequentialElements,
+                int numberOfOtherElements);
+
             [UnmanagedFunction("lua_getglobal")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate int LuaGetGlobal(IntPtr luaState, string globalName);
+
+            [UnmanagedFunction("lua_gettop")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaGetTop(IntPtr luaState);
 
             [UnmanagedFunction("lua_isinteger")]
             [SuppressUnmanagedCodeSecurity]
@@ -60,6 +75,11 @@ namespace LuaDotNet.PInvoke
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate IntPtr LuaLNewState();
+
+            [UnmanagedFunction("lua_next")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaNext(IntPtr luaState, int tableIndex);
 
             [UnmanagedFunction("lua_pushboolean")]
             [SuppressUnmanagedCodeSecurity]
@@ -96,10 +116,20 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaPushValue(IntPtr luaState, int stackIndex);
 
+            [UnmanagedFunction("lua_rawseti")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaRawSetI(IntPtr luaState, int tableIndex, long keyIndex);
+
             [UnmanagedFunction("lua_setglobal")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate void LuaSetGlobal(IntPtr luaState, string globalName);
+
+            [UnmanagedFunction("lua_settop")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaSetTop(IntPtr luaState, int top);
 
             [UnmanagedFunction("lua_toboolean")]
             [SuppressUnmanagedCodeSecurity]
@@ -125,11 +155,6 @@ namespace LuaDotNet.PInvoke
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate LuaType LuaTypeD(IntPtr luaState, int stackIndex);
-            
-            [UnmanagedFunction("lua_gettop")]
-            [SuppressUnmanagedCodeSecurity]
-            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate int LuaGetTop(IntPtr luaState);
         }
 
 #pragma warning disable 649 
@@ -151,6 +176,10 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaToIntegerX LuaToIntegerX;
         public FunctionSignatures.LuaToNumberX LuaToNumberX;
         public FunctionSignatures.LuaGetTop LuaGetTop;
+        public FunctionSignatures.LuaCreateTable LuaCreateTable;
+        public FunctionSignatures.LuaRawSetI LuaRawSetI;
+        public FunctionSignatures.LuaSetTop LuaSetTop;
+        public FunctionSignatures.LuaNext LuaNext;
 #pragma warning restore 649
     }
 }

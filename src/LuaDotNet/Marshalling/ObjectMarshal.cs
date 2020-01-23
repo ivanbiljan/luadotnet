@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling
 {
+    // TODO: Is the LuaContext dependency (absolutely) necessary? --> Guess not
+
     internal sealed class ObjectMarshal
     {
-        private readonly LuaContext _lua;
+//        private readonly LuaContext _lua;
 
         private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
         {
@@ -23,17 +26,18 @@ namespace LuaDotNet.Marshalling
             [typeof(ulong)] = () => new NumberParser(),
             [typeof(float)] = () => new NumberParser(),
             [typeof(double)] = () => new NumberParser(),
-            [typeof(bool)] = () => new BooleanParser()
+            [typeof(bool)] = () => new BooleanParser(),
+            [typeof(Array)] = () => new ArrayParser()
         };
 
-        public ObjectMarshal(LuaContext lua)
-        {
-            _lua = lua ?? throw new ArgumentNullException(nameof(lua));
-        }
+//        public ObjectMarshal(LuaContext lua)
+//        {
+//            _lua = lua ?? throw new ArgumentNullException(nameof(lua));
+//        }
 
-        public object GetObject(int stackIndex)
+        public object GetObject(IntPtr state, int stackIndex)
         {
-            var luaType = LuaModule.Instance.LuaType(_lua.State, stackIndex);
+            var luaType = LuaModule.Instance.LuaType(state, stackIndex);
             var objectType = typeof(object);
             switch (luaType)
             {
@@ -51,6 +55,7 @@ namespace LuaDotNet.Marshalling
                     objectType = typeof(string);
                     break;
                 case LuaType.Table:
+                    objectType = typeof(Array);
                     break;
                 case LuaType.Function:
                     break;
@@ -62,31 +67,37 @@ namespace LuaDotNet.Marshalling
                     throw new ArgumentOutOfRangeException();
             }
 
-            var parser = _typeParsers.GetValueOrDefault(objectType)();
+            var parser = _typeParsers.GetValueOrDefault(objectType);
             if (parser == null)
             {
                 throw new LuaException($"Missing parser for type '{objectType.Name}'");
             }
 
-            return parser.Parse(_lua.State, stackIndex);
+            return parser().Parse(state, stackIndex);
         }
 
-        public void PushToStack(object obj)
+        public void PushToStack(IntPtr state, object obj)
         {
             if (obj == null)
             {
-                LuaModule.Instance.LuaPushNil(_lua.State);
+                LuaModule.Instance.LuaPushNil(state);
                 return;
             }
 
             var objType = obj.GetType();
-            var parser = _typeParsers[objType]();
+            var parser = _typeParsers.GetValueOrDefault(objType);
+            while (parser == null && objType.BaseType != null)
+            {
+                parser = _typeParsers.GetValueOrDefault(objType.BaseType);
+                objType = objType.BaseType;
+            }
+
             if (parser == null)
             {
                 throw new LuaException($"Missing parser for type '{objType.Name}'");
             }
 
-            parser.Push(obj, _lua.State);
+            parser().Push(obj, state);
         }
 
         public void RegisterTypeParser(Type type, ITypeParser typeParser)
@@ -95,7 +106,7 @@ namespace LuaDotNet.Marshalling
             {
                 throw new ArgumentNullException(nameof(typeParser));
             }
-            
+
             _typeParsers[type] = () => typeParser;
         }
     }

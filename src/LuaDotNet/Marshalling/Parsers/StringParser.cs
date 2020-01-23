@@ -24,7 +24,7 @@ namespace LuaDotNet.Marshalling
             }
 
             // UTF-8 is the encoding Lua uses. Possible TODO: Support multiple encodings like NLua does?
-            var encodedString = str.GetEncodedString(Encoding.UTF8); 
+            var encodedString = str.GetEncodedString(Encoding.UTF8);
             LuaModule.Instance.LuaPushLString(state, encodedString, new UIntPtr((uint) encodedString.Length));
         }
     }

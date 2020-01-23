@@ -17,6 +17,7 @@ namespace Tests
         [TestCase("bool", true)]
         [TestCase("integer", -123456L)]
         [TestCase("float", 123.456)]
+        [TestCase("array", new long[] {1, 2, 3})]
         public void GetSetGlobal_IsCorrect(string global, object value)
         {
             var lua = new LuaContext();

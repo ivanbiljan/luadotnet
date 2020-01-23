@@ -21,11 +21,11 @@ namespace LuaDotNet.DebuggingHelpers
 
             ColumnHeaders = headers;
         }
-        
+
         private IList<string> ColumnHeaders { get; }
-        
+
         private IList<string[]> Entities { get; } = new List<string[]>();
-        
+
         public void AddRow(params object[] values)
         {
             if (values == null)
@@ -40,7 +40,7 @@ namespace LuaDotNet.DebuggingHelpers
 
             Entities.Add(values.Select(v => v.ToString()).ToArray());
         }
-        
+
         public string GetOutput()
         {
             var tableBuilder = new StringBuilder();
@@ -67,7 +67,7 @@ namespace LuaDotNet.DebuggingHelpers
 
             return tableBuilder.ToString();
         }
-        
+
         private IEnumerable<int> GetColumnLengths()
         {
             return ColumnHeaders.Select((c, ix) =>

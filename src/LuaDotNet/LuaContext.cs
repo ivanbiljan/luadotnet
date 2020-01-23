@@ -17,7 +17,7 @@ namespace LuaDotNet
         public LuaContext()
         {
             State = LuaModule.Instance.LuaLNewState();
-            _objectMarshal = new ObjectMarshal(this);
+            _objectMarshal = new ObjectMarshal();
         }
 
         /// <summary>
@@ -33,11 +33,11 @@ namespace LuaDotNet
         public object GetGlobal(string name)
         {
             LuaModule.Instance.LuaGetGlobal(State, name);
-            return _objectMarshal.GetObject(-1);
+            return _objectMarshal.GetObject(State, -1);
         }
-        
+
         /// <summary>
-        /// Registers a type parser for the specified type. This action will override any existing parsers.
+        ///     Registers a type parser for the specified type. This action will override any existing parsers.
         /// </summary>
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
@@ -51,7 +51,7 @@ namespace LuaDotNet
         /// <param name="value">The value.</param>
         public void SetGlobal(string name, object value)
         {
-            _objectMarshal.PushToStack(value);
+            _objectMarshal.PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
     }
