@@ -7,12 +7,10 @@ using LuaDotNet.PInvoke;
 namespace LuaDotNet.Marshalling
 {
     // TODO: Is the LuaContext dependency (absolutely) necessary? --> Guess not
-    // TODO: Use ObjectMarshal pools like NLua does?
+    // TODO: Use ObjectMarshal pools like NLua does? --> Done
 
     internal sealed class ObjectMarshal
     {
-//        private readonly LuaContext _lua;
-
         private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
         {
             [typeof(string)] = () => new StringParser(),
@@ -27,13 +25,10 @@ namespace LuaDotNet.Marshalling
             [typeof(float)] = () => new NumberParser(),
             [typeof(double)] = () => new NumberParser(),
             [typeof(bool)] = () => new BooleanParser(),
-            [typeof(Array)] = () => new ArrayParser()
+            [typeof(Array)] = () => new ArrayParser(),
+            [typeof(Type)] = () => new NetTypeTypeParser(),
+            [typeof(object)] = () => new NetObjectParser()
         };
-
-//        public ObjectMarshal(LuaContext lua)
-//        {
-//            _lua = lua ?? throw new ArgumentNullException(nameof(lua));
-//        }
 
         public object GetObject(IntPtr state, int stackIndex)
         {
@@ -94,6 +89,7 @@ namespace LuaDotNet.Marshalling
 
             if (parser == null)
             {
+                // TODO: Use some form of a default parser
                 throw new LuaException($"Missing parser for type '{objType.Name}'");
             }
 

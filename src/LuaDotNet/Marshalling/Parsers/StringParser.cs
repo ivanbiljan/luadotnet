@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling
@@ -16,16 +15,6 @@ namespace LuaDotNet.Marshalling
             return Encoding.UTF8.GetString(stringBuffer);
         }
 
-        public void Push(object obj, IntPtr state)
-        {
-            if (!(obj is string str))
-            {
-                return;
-            }
-
-            // UTF-8 is the encoding Lua uses. Possible TODO: Support multiple encodings like NLua does?
-            var encodedString = str.GetEncodedString(Encoding.UTF8);
-            LuaModule.Instance.LuaPushLString(state, encodedString, new UIntPtr((uint) encodedString.Length));
-        }
+        public void Push(object obj, IntPtr state) => LuaModule.Instance.LuaPushLString(state, (string) obj);
     }
 }

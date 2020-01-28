@@ -43,7 +43,7 @@ namespace LuaDotNet.DebuggingHelpers
             }
 
             Debug.WriteLine(table.GetOutput());
-            Debug.WriteLine("--------------- STACK ---------------");
+            Debug.WriteLine("--------------- END OF STACK ---------------");
         }
     }
 }

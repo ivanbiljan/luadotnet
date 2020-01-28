@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
@@ -12,15 +13,13 @@ namespace LuaDotNet
     /// </summary>
     public sealed class LuaContext
     {
-        private readonly ObjectMarshal _objectMarshal;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
         /// </summary>
         public LuaContext()
         {
             State = LuaModule.Instance.LuaLNewState();
-            _objectMarshal = new ObjectMarshal();
+            Metamethods.CreateMetatables(State);
         }
 
         /// <summary>
@@ -37,12 +36,14 @@ namespace LuaDotNet
         /// <returns>The chunk's results.</returns>
         public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
         {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+
             LuaErrorCode errorCode;
             if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) !=
                 LuaErrorCode.LuaOk)
             {
                 // Lua pushes an error message in case of errors
-                var errorMessage = (string) _objectMarshal.GetObject(State, -1);
+                var errorMessage = (string) objectMarshal.GetObject(State, -1);
                 LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
                 throw new LuaException($"[{errorCode}]: {errorMessage}");
             }
@@ -58,7 +59,7 @@ namespace LuaDotNet
         public object GetGlobal(string name)
         {
             LuaModule.Instance.LuaGetGlobal(State, name);
-            return _objectMarshal.GetObject(State, -1);
+            return ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
         }
 
         /// <summary>
@@ -67,7 +68,7 @@ namespace LuaDotNet
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
         public void RegisterTypeParser(Type type, ITypeParser typeParser) =>
-            _objectMarshal.RegisterTypeParser(type, typeParser);
+            ObjectMarshalPool.GetMarshal(State).RegisterTypeParser(type, typeParser);
 
         /// <summary>
         ///     Sets the value of the specified global variable.
@@ -76,13 +77,15 @@ namespace LuaDotNet
         /// <param name="value">The value.</param>
         public void SetGlobal(string name, object value)
         {
-            _objectMarshal.PushToStack(State, value);
+            ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        private object[] CallWithArguments(object[] arguments = null, int numberOfResults = LuaModule.LuaMultRet)
+        private object[] CallWithArguments(IReadOnlyCollection<object> arguments = null,
+            int numberOfResults = LuaModule.LuaMultRet)
         {
             // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             var stackTop = LuaModule.Instance.LuaGetTop(State) - 1;
 
             // The function is already on the stack so the only thing left to do is push the arguments in direct order
@@ -90,18 +93,18 @@ namespace LuaDotNet
             {
                 foreach (var argument in arguments)
                 {
-                    _objectMarshal.PushToStack(State, argument);
+                    objectMarshal.PushToStack(State, argument);
                 }
             }
 
             // Adjust the number of results to avoid errors
             numberOfResults = numberOfResults < -1 ? -1 : numberOfResults;
             LuaErrorCode errorCode;
-            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Length ?? 0, numberOfResults)) !=
+            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Count ?? 0, numberOfResults)) !=
                 LuaErrorCode.LuaOk)
             {
                 // Lua pushes an error message in case of errors
-                var errorMessage = (string) _objectMarshal.GetObject(State, -1);
+                var errorMessage = (string) objectMarshal.GetObject(State, -1);
                 LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
                 throw new LuaException(
                     $"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
@@ -111,7 +114,7 @@ namespace LuaDotNet
             var results = new object[newStackTop - stackTop];
             for (var i = newStackTop; i > stackTop; --i) // Results are also pushed in direct order
             {
-                results[i - stackTop - 1] = _objectMarshal.GetObject(State, i);
+                results[i - stackTop - 1] = objectMarshal.GetObject(State, i);
             }
 
             LuaModule.Instance.LuaSetTop(State, stackTop);

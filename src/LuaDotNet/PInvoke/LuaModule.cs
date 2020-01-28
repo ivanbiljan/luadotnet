@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Text;
 using LuaDotNet.Extensions;
 using NLdr;
 using NLdr.Framework;
@@ -41,6 +42,25 @@ namespace LuaDotNet.PInvoke
 
         public void LuaPop(IntPtr state, int numberOfElements) => LuaSetTop(state, -numberOfElements - 1);
 
+        public void LuaPushLString(IntPtr state, string str)
+        {
+            // UTF-8 is the encoding Lua uses. Possible TODO: Support multiple encodings like NLua does?
+            var encodedString = str.GetEncodedString(Encoding.UTF8);
+            LuaPushLStringDelegate(state, encodedString, new UIntPtr((uint) encodedString.Length));
+        }
+
+        public void PushNetObjAsUserdata(IntPtr state, object obj)
+        {
+            var userdataPointer = LuaNewUserdata(state, new UIntPtr((uint) IntPtr.Size));
+            Marshal.WriteIntPtr(userdataPointer, GCHandle.ToIntPtr(GCHandle.Alloc(obj)));
+        }
+
+        public object UserdataToNetObject(IntPtr state, int stackIndex)
+        {
+            var userdataPointer = LuaToUserdata(state, stackIndex);
+            return GCHandle.FromIntPtr(Marshal.ReadIntPtr(userdataPointer)).Target;
+        }
+
         internal static class FunctionSignatures
         {
             [SuppressUnmanagedCodeSecurity]
@@ -57,6 +77,11 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaCreateTable(IntPtr luaState, int numberOfSequentialElements,
                 int numberOfOtherElements);
+
+            [UnmanagedFunction("lua_getfield")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaGetField(IntPtr luaState, int tableIndex, string key);
 
             [UnmanagedFunction("lua_getglobal")]
             [SuppressUnmanagedCodeSecurity]
@@ -78,10 +103,20 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate LuaErrorCode LuaLLoadString(IntPtr luaState, [In] byte[] stringBytes);
 
+            [UnmanagedFunction("luaL_newmetatable")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate bool LuaLNewMetatable(IntPtr luaState, string name);
+
             [UnmanagedFunction("luaL_newstate")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate IntPtr LuaLNewState();
+
+            [UnmanagedFunction("lua_newuserdata")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate IntPtr LuaNewUserdata(IntPtr luaState, UIntPtr size);
 
             [UnmanagedFunction("lua_next")]
             [SuppressUnmanagedCodeSecurity]
@@ -141,6 +176,16 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate void LuaSetGlobal(IntPtr luaState, string globalName);
 
+            [UnmanagedFunction("lua_setmetatable")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaSetMetatable(IntPtr luaState, int objectIndex);
+
+            [UnmanagedFunction("lua_settable")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaSetTable(IntPtr luaState, int tableIndex);
+
             [UnmanagedFunction("lua_settop")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -166,6 +211,11 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate double LuaToNumberX(IntPtr luaState, int stackIndex, out IntPtr isNum);
 
+            [UnmanagedFunction("lua_touserdata")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate IntPtr LuaToUserdata(IntPtr luaState, int stackIndex);
+
             [UnmanagedFunction("lua_type")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -180,7 +230,7 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaPushBoolean LuaPushBoolean;
         public FunctionSignatures.LuaPushCClosure LuaPushCClosure;
         public FunctionSignatures.LuaPushInteger LuaPushInteger;
-        public FunctionSignatures.LuaPushLString LuaPushLString;
+        public FunctionSignatures.LuaPushLString LuaPushLStringDelegate;
         public FunctionSignatures.LuaPushNil LuaPushNil;
         public FunctionSignatures.LuaPushNumber LuaPushNumber;
         public FunctionSignatures.LuaPushValue LuaPushValue;
@@ -197,6 +247,12 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaNext LuaNext;
         public FunctionSignatures.LuaPCallK LuaPCallK;
         public FunctionSignatures.LuaLLoadString LuaLLoadString;
+        public FunctionSignatures.LuaNewUserdata LuaNewUserdata;
+        public FunctionSignatures.LuaToUserdata LuaToUserdata;
+        public FunctionSignatures.LuaSetMetatable LuaSetMetatable;
+        public FunctionSignatures.LuaGetField LuaGetField;
+        public FunctionSignatures.LuaLNewMetatable LuaLNewMetatable;
+        public FunctionSignatures.LuaSetTable LuaSetTable;
 #pragma warning restore 649
     }
 }
