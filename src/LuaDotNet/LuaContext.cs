@@ -11,7 +11,7 @@ namespace LuaDotNet
     /// <summary>
     ///     Represents an independent Lua context.
     /// </summary>
-    public sealed class LuaContext
+    public sealed class LuaContext : IDisposable
     {
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
@@ -119,6 +119,23 @@ namespace LuaDotNet
 
             LuaModule.Instance.LuaSetTop(State, stackTop);
             return results;
+        }
+
+        private void ReleaseUnmanagedResources()
+        {
+            // TODO release unmanaged resources here
+            LuaModule.Instance.LuaClose(State);
+        }
+
+        public void Dispose()
+        {
+            ReleaseUnmanagedResources();
+            GC.SuppressFinalize(this);
+        }
+
+        ~LuaContext()
+        {
+            ReleaseUnmanagedResources();
         }
     }
 }
