@@ -220,6 +220,16 @@ namespace LuaDotNet.PInvoke
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate LuaType LuaTypeD(IntPtr luaState, int stackIndex);
+            
+            [UnmanagedFunction("luaL_ref")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaLRef(IntPtr luaState, int tableIndex);
+            
+            [UnmanagedFunction("luaL_unref")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaLUnref(IntPtr luaState, int tableIndex, int reference);
         }
 
 #pragma warning disable 649 
@@ -253,6 +263,8 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaGetField LuaGetField;
         public FunctionSignatures.LuaLNewMetatable LuaLNewMetatable;
         public FunctionSignatures.LuaSetTable LuaSetTable;
+        public FunctionSignatures.LuaLRef LuaLRef;
+        public FunctionSignatures.LuaLUnref LuaLUnref;
 #pragma warning restore 649
     }
 }
