@@ -7,20 +7,22 @@ namespace LuaDotNet
     [PublicAPI]
     public abstract class LuaObject : IDisposable
     {
-        private readonly IntPtr _luaState;
-        private readonly int _reference;
         private bool _disposed;
 
-        public LuaObject(IntPtr luaState, int reference)
+        protected LuaObject(LuaContext lua, int reference)
         {
-            _luaState = luaState;
-            _reference = reference;
+            Lua = lua;
+            Reference = reference;
         }
+
+        protected LuaContext Lua { get; }
+
+        protected int Reference { get; }
 
         private void ReleaseUnmanagedResources()
         {
             // TODO release unmanaged resources here
-            LuaModule.Instance.LuaLUnref(_luaState, (int) LuaRegistry.RegistryIndex, _reference);
+            LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
         }
 
         protected virtual void Dispose(bool disposing)

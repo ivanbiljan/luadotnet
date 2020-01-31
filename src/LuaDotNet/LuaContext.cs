@@ -52,6 +52,32 @@ namespace LuaDotNet
         }
 
         /// <summary>
+        /// Loads the given Lua chunk into a <see cref="LuaFunction"/>.
+        /// </summary>
+        /// <param name="luaChunk">The chunk to load, which must not be <c>null</c>.</param>
+        /// <returns>A reusable Lua function.</returns>
+        /// <exception cref="LuaException">Something went wrong while loading the chunk.</exception>
+        public LuaFunction LoadString(string luaChunk)
+        {
+            if (luaChunk == null)
+            {
+                throw new ArgumentNullException(nameof(luaChunk));
+            }
+            
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            if (LuaModule.Instance.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
+            {
+                var errorMessage = (string) objectMarshal.GetObject(State, -1);
+                LuaModule.Instance.LuaPop(State, 1);
+                throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
+            }
+
+            var function = (LuaFunction) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            return function;
+        }
+
+        /// <summary>
         ///     Returns the value of a global variable with the specified name.
         /// </summary>
         /// <param name="name">The name, which must not be <c>null</c>.</param>
@@ -81,7 +107,7 @@ namespace LuaDotNet
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        private object[] CallWithArguments(IReadOnlyCollection<object> arguments = null,
+        internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null,
             int numberOfResults = LuaModule.LuaMultRet)
         {
             // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called

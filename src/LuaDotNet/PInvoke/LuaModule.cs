@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -61,6 +62,7 @@ namespace LuaDotNet.PInvoke
             return GCHandle.FromIntPtr(Marshal.ReadIntPtr(userdataPointer)).Target;
         }
 
+        [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
         internal static class FunctionSignatures
         {
             [SuppressUnmanagedCodeSecurity]
@@ -112,6 +114,16 @@ namespace LuaDotNet.PInvoke
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
             public delegate IntPtr LuaLNewState();
+
+            [UnmanagedFunction("luaL_ref")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaLRef(IntPtr luaState, int tableIndex);
+
+            [UnmanagedFunction("luaL_unref")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaLUnref(IntPtr luaState, int tableIndex, int reference);
 
             [UnmanagedFunction("lua_newuserdata")]
             [SuppressUnmanagedCodeSecurity]
@@ -166,6 +178,11 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaPushValue(IntPtr luaState, int stackIndex);
 
+            [UnmanagedFunction("lua_rawgeti")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaRawGetI(IntPtr luaState, int tableIndex, LuaInteger elementIndex);
+
             [UnmanagedFunction("lua_rawseti")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -211,6 +228,16 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate double LuaToNumberX(IntPtr luaState, int stackIndex, out IntPtr isNum);
 
+            [UnmanagedFunction("lua_topointer")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate IntPtr LuaToPointer(IntPtr luaState, int stackIndex);
+
+            [UnmanagedFunction("lua_tothread")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate IntPtr LuaToThread(IntPtr luaState, int stackIndex);
+
             [UnmanagedFunction("lua_touserdata")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -221,15 +248,30 @@ namespace LuaDotNet.PInvoke
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate LuaType LuaTypeD(IntPtr luaState, int stackIndex);
             
-            [UnmanagedFunction("luaL_ref")]
+            [UnmanagedFunction("lua_checkstack")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate int LuaLRef(IntPtr luaState, int tableIndex);
+            public delegate bool LuaCheckStack(IntPtr luaState, int n);
             
-            [UnmanagedFunction("luaL_unref")]
+            [UnmanagedFunction("lua_resume")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate void LuaLUnref(IntPtr luaState, int tableIndex, int reference);
+            public delegate int LuaResume(IntPtr coroutineState, IntPtr fromCoroutineState, int nargs, out int nresults);
+            
+            [UnmanagedFunction("lua_xmove")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
+            
+            [UnmanagedFunction("lua_status")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaStatus(IntPtr threadState);
+            
+            [UnmanagedFunction("lua_getstack")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate int LuaGetStack(IntPtr luaState, int level, out LuaDebug ar);
         }
 
 #pragma warning disable 649 
@@ -253,6 +295,7 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaGetTop LuaGetTop;
         public FunctionSignatures.LuaCreateTable LuaCreateTable;
         public FunctionSignatures.LuaRawSetI LuaRawSetI;
+        public FunctionSignatures.LuaRawGetI LuaRawGetI;
         public FunctionSignatures.LuaSetTop LuaSetTop;
         public FunctionSignatures.LuaNext LuaNext;
         public FunctionSignatures.LuaPCallK LuaPCallK;
@@ -265,6 +308,13 @@ namespace LuaDotNet.PInvoke
         public FunctionSignatures.LuaSetTable LuaSetTable;
         public FunctionSignatures.LuaLRef LuaLRef;
         public FunctionSignatures.LuaLUnref LuaLUnref;
+        public FunctionSignatures.LuaCheckStack LuaCheckStack;
+        public FunctionSignatures.LuaResume LuaResume;
+        public FunctionSignatures.LuaXMove LuaXMove;
+        public FunctionSignatures.LuaStatus LuaStatus;
+        public FunctionSignatures.LuaToThread LuaToThread;
+        public FunctionSignatures.LuaToPointer LuaToPointer;
+        public FunctionSignatures.LuaGetStack LuaGetStack;
 #pragma warning restore 649
     }
 }

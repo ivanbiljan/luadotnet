@@ -79,6 +79,11 @@ namespace LuaDotNet.Marshalling
                 return;
             }
 
+            if (obj is LuaObject luaObject)
+            {
+                
+            }
+
             var objType = obj.GetType();
             var parser = _typeParsers.GetValueOrDefault(objType);
             while (parser == null && objType.BaseType != null)
