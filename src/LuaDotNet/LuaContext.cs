@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling;
@@ -12,6 +13,7 @@ namespace LuaDotNet {
     /// <summary>
     ///     Represents an independent Lua context.
     /// </summary>
+    [PublicAPI]
     public sealed class LuaContext : IDisposable {
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
@@ -26,7 +28,8 @@ namespace LuaDotNet {
         ///     Gets the Lua state associated with this context.
         /// </summary>
         public IntPtr State { get; }
-
+        
+        /// <inheritdoc /> 
         public void Dispose() {
             ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
@@ -45,7 +48,7 @@ namespace LuaDotNet {
         /// <param name="luaFunction">The Lua function which the coroutine will execute, which must not be <c>null</c>.</param>
         /// <returns>The coroutine.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="luaFunction" /> is <c>null</c>.</exception>
-        public LuaCoroutine CreateCoroutine(LuaFunction luaFunction) {
+        public LuaCoroutine CreateCoroutine([NotNull] LuaFunction luaFunction) {
             if (luaFunction == null) {
                 throw new ArgumentNullException(nameof(luaFunction));
             }
@@ -59,9 +62,32 @@ namespace LuaDotNet {
             return coroutine;
         }
 
-        public LuaFunction CreateFunction(Delegate @delegate) => throw new NotImplementedException();
+        /// <summary>
+        /// Creates and returns a Lua function which once executed runs the specified delegate.
+        /// </summary>
+        /// <param name="delegate">The delegate, which must not be <c>null</c>.</param>
+        /// <returns>The function.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="delegate"/> is <c>null</c>.</exception>
+        public LuaFunction CreateFunction([NotNull] Delegate @delegate) {
+            if (@delegate == null) {
+                throw new ArgumentNullException(nameof(@delegate));
+            }
 
-        public LuaFunction CreateFunction(MethodInfo methodInfo, object target = null) {
+            return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
+        }
+
+        /// <summary>
+        /// Creates and returns a Lua function which once executed runs the method represented by the specified object.
+        /// </summary>
+        /// <param name="methodInfo">The <see cref="MethodInfo"/> object that represents the method.</param>
+        /// <param name="target">The class instance on which the method is invoked.</param>
+        /// <returns>The function.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="methodInfo"/> is <c>null</c>.</exception>
+        public LuaFunction CreateFunction([NotNull] MethodInfo methodInfo, object target = null) {
+            if (methodInfo == null) {
+                throw new ArgumentNullException(nameof(methodInfo));
+            }
+            
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             var objectMarshalGetObjectMethod = typeof(ObjectMarshal).GetMethod("GetObject");
 
@@ -86,23 +112,26 @@ namespace LuaDotNet {
         /// <summary>
         ///     Executes the specified Lua chunk and returns the results.
         /// </summary>
-        /// <param name="luaState">The Lua state pointer.</param>
         /// <param name="luaChunk">The Lua chunk to execute, which must not be <c>null</c>.</param>
         /// <param name="numberOfResults">The number of results to return.</param>
         /// <returns>The chunk's results.</returns>
-        public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet) {
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-
+        /// <exception cref="ArgumentNullException"><paramref name="luaChunk"/> is <c>null</c>.</exception>
+        public object[] DoString([NotNull] string luaChunk, int numberOfResults = LuaModule.LuaMultRet) {
+            if (luaChunk == null) {
+                throw new ArgumentNullException(nameof(luaChunk));
+            }
+            
             LuaErrorCode errorCode;
-            if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) !=
-                LuaErrorCode.LuaOk) {
-                // Lua pushes an error message in case of errors
-                var errorMessage = (string) objectMarshal.GetObject(State, -1);
-                LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
-                throw new LuaException($"[{errorCode}]: {errorMessage}");
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) == LuaErrorCode.LuaOk) {
+                return CallWithArguments(numberOfResults: numberOfResults);
             }
 
-            return CallWithArguments(numberOfResults: numberOfResults);
+            // Lua pushes an error message in case of errors
+            var errorMessage = (string) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
+            throw new LuaException($"[{errorCode}]: {errorMessage}");
+
         }
 
         /// <summary>
@@ -110,7 +139,12 @@ namespace LuaDotNet {
         /// </summary>
         /// <param name="name">The name, which must not be <c>null</c>.</param>
         /// <returns>The value.</returns>
-        public object GetGlobal(string name) {
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <c>null</c>.</exception>
+        public object GetGlobal([NotNull] string name) {
+            if (name == null) {
+                throw new ArgumentNullException(nameof(name));
+            }
+            
             LuaModule.Instance.LuaGetGlobal(State, name);
             return ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
         }
@@ -120,8 +154,9 @@ namespace LuaDotNet {
         /// </summary>
         /// <param name="luaChunk">The chunk to load, which must not be <c>null</c>.</param>
         /// <returns>A reusable Lua function.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="luaChunk"/> is <c>null</c>.</exception>
         /// <exception cref="LuaException">Something went wrong while loading the chunk.</exception>
-        public LuaFunction LoadString(string luaChunk) {
+        public LuaFunction LoadString([NotNull] string luaChunk) {
             if (luaChunk == null) {
                 throw new ArgumentNullException(nameof(luaChunk));
             }
@@ -143,7 +178,7 @@ namespace LuaDotNet {
         /// </summary>
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
-        public void RegisterTypeParser(Type type, ITypeParser typeParser) =>
+        public void RegisterTypeParser([NotNull] Type type, [NotNull] ITypeParser typeParser) =>
             ObjectMarshalPool.GetMarshal(State).RegisterTypeParser(type, typeParser);
 
         /// <summary>
@@ -151,13 +186,17 @@ namespace LuaDotNet {
         /// </summary>
         /// <param name="name">The name, which must not be <c>null</c>.</param>
         /// <param name="value">The value.</param>
-        public void SetGlobal(string name, object value) {
+        /// <exception cref="ArgumentNullException"><paramref name="name"/> is <c>null</c>.</exception>
+        public void SetGlobal([NotNull] string name, object value) {
+            if (name == null) {
+                throw new ArgumentNullException(nameof(name));
+            }
+            
             ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null,
-            int numberOfResults = LuaModule.LuaMultRet) {
+        internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaModule.LuaMultRet) {
             // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             var stackTop = LuaModule.Instance.LuaGetTop(State) - 1;

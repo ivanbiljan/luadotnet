@@ -32,7 +32,7 @@ namespace LuaDotNet {
     }
 
     /// <summary>
-    ///     Represents a Lua couroutine.
+    ///     Represents a Lua coroutine.
     /// </summary>
     public sealed class LuaCoroutine : LuaObject {
         /// <inheritdoc />

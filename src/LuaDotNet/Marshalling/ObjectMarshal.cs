@@ -55,7 +55,7 @@ namespace LuaDotNet.Marshalling {
                 case LuaType.Userdata:
                     break;
                 case LuaType.Thread:
-                    break;
+                    return new LuaCoroutine(_lua, GetRegistryReference());
                 default:
                     throw new ArgumentOutOfRangeException();
             }
