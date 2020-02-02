@@ -4,10 +4,10 @@ using System.Runtime.InteropServices;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
+using static LuaDotNet.Utils;
 
 namespace LuaDotNet.Marshalling {
     internal class Metamethods {
-        public const string NetDelegateMetatable = "luadotnet_delegate";
         public const string NetObjectMetatable = "luadotnet_object";
         public const string NetTypeMetatable = "luadotnet_type";
 
@@ -23,11 +23,6 @@ namespace LuaDotNet.Marshalling {
             PushMetamethod("__gc", Gc);
             LuaModule.Instance.LuaPop(state, 1);
 
-            // Create the Delegate metatable
-            LuaModule.Instance.LuaLNewMetatable(state, NetDelegateMetatable);
-            PushMetamethod("__gc", Gc);
-            LuaModule.Instance.LuaPop(state, 1);
-
             void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) {
                 LuaModule.Instance.LuaPushLString(state, metamethod);
                 LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
@@ -39,14 +34,8 @@ namespace LuaDotNet.Marshalling {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var type = LuaModule.Instance.UserdataToNetObject(state, 1) as Type;
             var typeMetadata = type.GetOrCreateMetadata();
-            var arguments = new object[LuaModule.Instance.LuaGetTop(state) - 1];
-            for (var i = 2; i < LuaModule.Instance.LuaGetTop(state); ++i) {
-                arguments[i - 2] = objectMarshal.GetObject(state, i);
-            }
-
-            var constructor =
-                Utils.TryResolveMethodCall(typeMetadata.Constructors, arguments, out var convertedArguments) as
-                    ConstructorInfo;
+            var arguments = objectMarshal.GetObjects(state, 2, LuaModule.Instance.LuaGetTop(state));
+            var constructor = TryResolveMethodCall(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
             if (constructor == null) {
                 throw new LuaException(
                     $"Type {type.Name} does not contain a constructor that contains the provided arguments.");

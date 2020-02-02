@@ -39,26 +39,48 @@ namespace LuaDotNet {
             ReleaseUnmanagedResources();
         }
 
+        /// <summary>
+        ///     Creates and returns a new coroutine with the specified Lua function to execute.
+        /// </summary>
+        /// <param name="luaFunction">The Lua function which the coroutine will execute, which must not be <c>null</c>.</param>
+        /// <returns>The coroutine.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="luaFunction" /> is <c>null</c>.</exception>
+        public LuaCoroutine CreateCoroutine(LuaFunction luaFunction) {
+            if (luaFunction == null) {
+                throw new ArgumentNullException(nameof(luaFunction));
+            }
+
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            var statePointer = LuaModule.Instance.LuaNewThread(State);
+            luaFunction.PushToStack(State);
+            LuaModule.Instance.LuaXMove(State, statePointer, 1);
+            var coroutine = (LuaCoroutine) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            return coroutine;
+        }
+
         public LuaFunction CreateFunction(Delegate @delegate) => throw new NotImplementedException();
 
         public LuaFunction CreateFunction(MethodInfo methodInfo, object target = null) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            var objectMarshalGetObjectMethod = typeof(ObjectMarshal).GetMethod("GetObject");
+
             var luaStateParameter = Expression.Parameter(typeof(IntPtr));
             var argumentExpressions = new List<Expression>();
             var methodParameters = methodInfo.GetParameters();
             for (var i = 0; i < methodParameters.Length; ++i) {
                 var parameter = methodParameters[i];
                 var getObjectCallExpression = Expression.Call(Expression.Constant(objectMarshal),
-                    typeof(ObjectMarshal).GetMethod("GetObject"), luaStateParameter, Expression.Constant(i + 1));
+                    objectMarshalGetObjectMethod, luaStateParameter, Expression.Constant(i + 1));
                 argumentExpressions.Add(Expression.Convert(getObjectCallExpression, parameter.ParameterType));
             }
 
             var methodCallExpression = Expression.Call(Expression.Constant(target), methodInfo, argumentExpressions);
             var functionBody = new List<Expression> {methodCallExpression, Expression.Constant(0)};
             var function = Expression
-                .Lambda<LuaModule.FunctionSignatures.LuaCFunction>(Expression.Block(functionBody.ToArray()),
-                    luaStateParameter).Compile();
-            return new LuaFunction(function, this);
+                .Lambda<LuaModule.FunctionSignatures.LuaCFunction>(Expression.Block(functionBody.ToArray()), luaStateParameter)
+                .Compile();
+            return new LuaFunction(this, function);
         }
 
         /// <summary>
@@ -148,7 +170,7 @@ namespace LuaDotNet {
             }
 
             // Adjust the number of results to avoid errors
-            numberOfResults = numberOfResults < -1 ? -1 : numberOfResults;
+            numberOfResults = Math.Max(numberOfResults, -1);
             LuaErrorCode errorCode;
             if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Count ?? 0, numberOfResults)) !=
                 LuaErrorCode.LuaOk) {
@@ -159,13 +181,7 @@ namespace LuaDotNet {
                     $"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
             }
 
-            var newStackTop = LuaModule.Instance.LuaGetTop(State);
-            var results = new object[newStackTop - stackTop];
-            for (var i = newStackTop; i > stackTop; --i) // Results are also pushed in direct order
-            {
-                results[i - stackTop - 1] = objectMarshal.GetObject(State, i);
-            }
-
+            var results = objectMarshal.GetObjects(State, stackTop + 1, LuaModule.Instance.LuaGetTop(State));
             LuaModule.Instance.LuaSetTop(State, stackTop);
             return results;
         }

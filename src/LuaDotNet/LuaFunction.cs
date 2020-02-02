@@ -14,8 +14,8 @@ namespace LuaDotNet {
         internal LuaFunction(LuaContext lua, int reference) : base(lua, reference) {
         }
 
-        internal LuaFunction(LuaModule.FunctionSignatures.LuaCFunction luaCFunction, LuaContext lua) : base(lua, 0) {
-            _luaCFunction = luaCFunction;
+        internal LuaFunction(LuaContext lua, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) : base(lua, 0) {
+            _luaCFunction = luaCFunction ?? throw new ArgumentNullException(nameof(luaCFunction));
         }
 
         internal override void PushToStack(IntPtr state) {

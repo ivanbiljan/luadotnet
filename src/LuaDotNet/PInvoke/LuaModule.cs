@@ -134,6 +134,11 @@ namespace LuaDotNet.PInvoke {
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaLUnref(IntPtr luaState, int tableIndex, int reference);
 
+            [UnmanagedFunction("lua_newthread")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate IntPtr LuaNewThread(IntPtr luaState);
+
             [UnmanagedFunction("lua_newuserdata")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -315,6 +320,7 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaToThread LuaToThread;
         public FunctionSignatures.LuaToPointer LuaToPointer;
         public FunctionSignatures.LuaGetStack LuaGetStack;
+        public FunctionSignatures.LuaNewThread LuaNewThread;
 #pragma warning restore 649
     }
 }

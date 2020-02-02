@@ -73,6 +73,15 @@ namespace LuaDotNet.Marshalling {
             }
         }
 
+        public object[] GetObjects(IntPtr state, int startIndex, int endIndex) {
+            var objs = new object[endIndex - startIndex + 1];
+            for (var i = startIndex; i <= endIndex; ++i) {
+                objs[i - startIndex] = GetObject(state, i);
+            }
+
+            return objs;
+        }
+
         public void PushToStack(IntPtr state, object obj) {
             if (obj == null) {
                 LuaModule.Instance.LuaPushNil(state);
