@@ -4,20 +4,15 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.DebuggingHelpers
-{
-    internal static class DebugHelper
-    {
-        public static void DumpStack(IntPtr luaState, [CallerMemberName] string caller = "")
-        {
+namespace LuaDotNet.DebuggingHelpers {
+    internal static class DebugHelper {
+        public static void DumpStack(IntPtr luaState, [CallerMemberName] string caller = "") {
             var table = new DebugTable("Stack Index", "Type", "Value");
             Debug.WriteLine($"--------------- STACK ({caller}) ---------------");
-            for (var i = 1; i <= LuaModule.Instance.LuaGetTop(luaState); ++i)
-            {
+            for (var i = 1; i <= LuaModule.Instance.LuaGetTop(luaState); ++i) {
                 var value = string.Empty;
                 var luaType = LuaModule.Instance.LuaType(luaState, i);
-                switch (luaType)
-                {
+                switch (luaType) {
                     case LuaType.Nil:
                         value = "NULL";
                         break;

@@ -1,13 +1,11 @@
 ﻿using JetBrains.Annotations;
 
-namespace LuaDotNet.PInvoke
-{
+namespace LuaDotNet.PInvoke {
     /// <summary>
     ///     Specifies a Lua type.
     /// </summary>
     [PublicAPI]
-    public enum LuaType
-    {
+    public enum LuaType {
         /// <summary>
         ///     Represents no type.
         /// </summary>

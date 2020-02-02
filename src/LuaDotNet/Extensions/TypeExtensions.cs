@@ -4,13 +4,11 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace LuaDotNet.Extensions
-{
+namespace LuaDotNet.Extensions {
     /// <summary>
     ///     Provides extension methods for the <see cref="Type" /> type.
     /// </summary>
-    public static class TypeExtensions
-    {
+    public static class TypeExtensions {
         /// <summary>
         ///     Gets the metadata cache.
         /// </summary>
@@ -23,8 +21,7 @@ namespace LuaDotNet.Extensions
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <returns>An enumerable collection of extension methods.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type" /> is <c>null</c>.</exception>
-        public static IEnumerable<MethodInfo> GetExtensionMethods(this Type type)
-        {
+        public static IEnumerable<MethodInfo> GetExtensionMethods(this Type type) {
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var extensionMethods = from a in assemblies
                 let types = a.GetTypes()
@@ -43,10 +40,8 @@ namespace LuaDotNet.Extensions
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <returns>The metadata.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type" /> is <c>null</c>.</exception>
-        public static TypeMetadata GetOrCreateMetadata(this Type type)
-        {
-            if (!MetadataCache.TryGetValue(type, out var metadata))
-            {
+        public static TypeMetadata GetOrCreateMetadata(this Type type) {
+            if (!MetadataCache.TryGetValue(type, out var metadata)) {
                 metadata = TypeMetadata.Create(type);
                 MetadataCache.Add(type, metadata);
             }
@@ -59,10 +54,8 @@ namespace LuaDotNet.Extensions
         /// </summary>
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <returns><c>true</c> if the type is an integer; otherwise, <c>false</c>.</returns>
-        public static bool IsInteger(this Type type)
-        {
-            switch (Type.GetTypeCode(type))
-            {
+        public static bool IsInteger(this Type type) {
+            switch (Type.GetTypeCode(type)) {
                 case TypeCode.Byte:
                 case TypeCode.Int16:
                 case TypeCode.Int32:

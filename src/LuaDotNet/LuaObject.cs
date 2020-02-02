@@ -2,18 +2,15 @@
 using JetBrains.Annotations;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet
-{
+namespace LuaDotNet {
     /// <summary>
     ///     Represents the base class for Lua objects.
     /// </summary>
     [PublicAPI]
-    public abstract class LuaObject : IDisposable
-    {
+    public abstract class LuaObject : IDisposable {
         private bool _disposed;
 
-        protected LuaObject(LuaContext lua, int reference)
-        {
+        protected LuaObject(LuaContext lua, int reference) {
             Lua = lua;
             Reference = reference;
         }
@@ -26,10 +23,8 @@ namespace LuaDotNet
         public int Reference { get; }
 
         /// <inheritdoc />
-        public void Dispose()
-        {
-            if (_disposed)
-            {
+        public void Dispose() {
+            if (_disposed) {
                 return;
             }
 
@@ -41,23 +36,19 @@ namespace LuaDotNet
         /// <summary>
         ///     The finalizer.
         /// </summary>
-        ~LuaObject()
-        {
+        ~LuaObject() {
             Dispose(false);
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
+        protected virtual void Dispose(bool disposing) {
             ReleaseUnmanagedResources();
         }
 
-        internal virtual void PushToStack(IntPtr state)
-        {
+        internal virtual void PushToStack(IntPtr state) {
             LuaModule.Instance.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
         }
 
-        private void ReleaseUnmanagedResources()
-        {
+        private void ReleaseUnmanagedResources() {
             // TODO release unmanaged resources here
             LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
         }

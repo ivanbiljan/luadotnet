@@ -4,11 +4,9 @@ using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace LuaDotNet.Extensions
-{
+namespace LuaDotNet.Extensions {
     [PublicAPI]
-    public sealed class TypeMetadata
-    {
+    public sealed class TypeMetadata {
         private IList<ConstructorInfo> _constructors;
         private IList<EventInfo> _instanceEvents;
         private IList<FieldInfo> _instanceFields;
@@ -73,21 +71,18 @@ namespace LuaDotNet.Extensions
         /// <param name="type">The type, which must not be <c>null</c>.</param>
         /// <returns>The metadata.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="type" /> is <c>null</c>.</exception>
-        public static TypeMetadata Create(Type type)
-        {
+        public static TypeMetadata Create(Type type) {
             const BindingFlags bindingFlags = BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance;
             var constructorInfos = type.GetConstructors().ToList();
             var methodInfos = new List<MethodInfo>();
-            foreach (var method in type.GetMethods(bindingFlags))
-            {
+            foreach (var method in type.GetMethods(bindingFlags)) {
                 // Disregard methods that wouldn't be of much use to the Lua runtime
                 if (method.Name != "GetType" &&
                     method.Name != "GetHashCode" && method.Name != "Equals" &&
                     method.Name != "ToString" && method.Name != "Clone" && method.Name != "Dispose" &&
                     method.Name != "GetEnumerator" && method.Name != "CopyTo" && !method.Name.StartsWith("_get") &&
                     !method.Name.StartsWith("_set") &&
-                    !method.Name.StartsWith("_add") && !method.Name.StartsWith("_remove"))
-                {
+                    !method.Name.StartsWith("_add") && !method.Name.StartsWith("_remove")) {
                     methodInfos.Add(method);
                 }
             }
@@ -96,8 +91,7 @@ namespace LuaDotNet.Extensions
             var fieldInfos = type.GetFields(bindingFlags).ToList();
             var propertyInfos = type.GetProperties(bindingFlags).ToList();
 
-            return new TypeMetadata
-            {
+            return new TypeMetadata {
                 _constructors = constructorInfos,
                 _instanceEvents = eventInfos.Where(e => !e.AddMethod.IsStatic).ToList(),
                 _instanceFields = fieldInfos.Where(f => !f.IsStatic).ToList(),
@@ -116,8 +110,7 @@ namespace LuaDotNet.Extensions
         /// <param name="memberName">The member name, which must not be <c>null</c>.</param>
         /// <param name="instance">The value indicating whether the member is an instance member.</param>
         /// <returns>An enumerable collection of members that match the specified name.</returns>
-        public IEnumerable<MemberInfo> GetMembers(string memberName, bool instance = false)
-        {
+        public IEnumerable<MemberInfo> GetMembers(string memberName, bool instance = false) {
             return instance
                 ? InstanceMembers.Where(m => m.Name == memberName)
                 : StaticMembers.Where(m => m.Name == memberName);
@@ -130,8 +123,7 @@ namespace LuaDotNet.Extensions
         /// <param name="instance">The value indicating whether the method is an instance method.</param>
         /// <returns>An enumerable collection of methods that match the specified name.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="methodName" /> is <c>null</c>.</exception>
-        public IEnumerable<MethodInfo> GetMethods(string methodName, bool instance = false)
-        {
+        public IEnumerable<MethodInfo> GetMethods(string methodName, bool instance = false) {
             return instance
                 ? _instanceMethods.Where(m => m.Name == methodName)
                 : _staticMethods.Where(m => m.Name == methodName);

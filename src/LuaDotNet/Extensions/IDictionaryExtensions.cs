@@ -1,12 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace LuaDotNet.Extensions
-{
+namespace LuaDotNet.Extensions {
     /// <summary>
     ///     Provides extension methods for the <see cref="IDictionary{TKey,TValue}" /> type.
     /// </summary>
-    public static class IDictionaryExtensions
-    {
+    public static class IDictionaryExtensions {
         /// <summary>
         ///     Gets the value of the specified key in the dictionary, or an optional default value if the key is not present in
         ///     the dictionary.

@@ -9,18 +9,14 @@ using NLdr;
 using NLdr.Framework;
 using LuaInteger = System.Int64; // Just to avoid improper marshalling
 
-namespace LuaDotNet.PInvoke
-{
-    internal sealed class LuaModule : NativeLibrary
-    {
+namespace LuaDotNet.PInvoke {
+    internal sealed class LuaModule : NativeLibrary {
         public const int LuaMultRet = -1;
 
-        static LuaModule()
-        {
+        static LuaModule() {
             var runtimesDirectory =
                 Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
-            if (runtimesDirectory.IsNullOrWhitespace())
-            {
+            if (runtimesDirectory.IsNullOrWhitespace()) {
                 throw new DirectoryNotFoundException("Cannot find Lua runtimes directory.");
             }
 
@@ -31,8 +27,7 @@ namespace LuaDotNet.PInvoke
 
         public static LuaModule Instance { get; } = new LuaModule();
 
-        public IntPtr GetMainThreadPointer(IntPtr state)
-        {
+        public IntPtr GetMainThreadPointer(IntPtr state) {
             LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, (long) LuaRegistry.MainThreadIndex);
             var mainThreadPointer = LuaToPointer(state, -1);
             LuaPop(state, 1);
@@ -51,28 +46,24 @@ namespace LuaDotNet.PInvoke
 
         public void LuaPop(IntPtr state, int numberOfElements) => LuaSetTop(state, -numberOfElements - 1);
 
-        public void LuaPushLString(IntPtr state, string str)
-        {
+        public void LuaPushLString(IntPtr state, string str) {
             // UTF-8 is the encoding Lua uses. Possible TODO: Support multiple encodings like NLua does?
             var encodedString = str.GetEncodedString(Encoding.UTF8);
             LuaPushLStringDelegate(state, encodedString, new UIntPtr((uint) encodedString.Length));
         }
 
-        public void PushNetObjAsUserdata(IntPtr state, object obj)
-        {
+        public void PushNetObjAsUserdata(IntPtr state, object obj) {
             var userdataPointer = LuaNewUserdata(state, new UIntPtr((uint) IntPtr.Size));
             Marshal.WriteIntPtr(userdataPointer, GCHandle.ToIntPtr(GCHandle.Alloc(obj)));
         }
 
-        public object UserdataToNetObject(IntPtr state, int stackIndex)
-        {
+        public object UserdataToNetObject(IntPtr state, int stackIndex) {
             var userdataPointer = LuaToUserdata(state, stackIndex);
             return GCHandle.FromIntPtr(Marshal.ReadIntPtr(userdataPointer)).Target;
         }
 
         [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
-        internal static class FunctionSignatures
-        {
+        internal static class FunctionSignatures {
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate int LuaCFunction(IntPtr luaState);

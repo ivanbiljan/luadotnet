@@ -1,12 +1,10 @@
 ﻿using System;
 
-namespace LuaDotNet.PInvoke
-{
+namespace LuaDotNet.PInvoke {
     /// <summary>
     ///     Specifies a Lua error code.
     /// </summary>
-    public enum LuaErrorCode
-    {
+    public enum LuaErrorCode {
         /// <summary>
         ///     Represents the normal status for a thread. When resuming threads with <see cref="LUA_OK" /> a new coroutine is
         ///     started, whereas <see cref="LUA_YIELD" /> resumes a couroutine.
