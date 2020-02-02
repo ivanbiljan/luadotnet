@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
@@ -19,6 +21,7 @@ namespace LuaDotNet
         public LuaContext()
         {
             State = LuaModule.Instance.LuaLNewState();
+            ObjectMarshalPool.AddMarshal(this, new ObjectMarshal(this));
             Metamethods.CreateMetatables(State);
         }
 
@@ -26,6 +29,47 @@ namespace LuaDotNet
         ///     Gets the Lua state associated with this context.
         /// </summary>
         public IntPtr State { get; }
+
+        public void Dispose()
+        {
+            ReleaseUnmanagedResources();
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// The finalizer.
+        /// </summary>
+        ~LuaContext()
+        {
+            ReleaseUnmanagedResources();
+        }
+
+        public LuaFunction CreateFunction(Delegate @delegate)
+        {
+            throw new NotImplementedException();
+        }
+
+        public LuaFunction CreateFunction(MethodInfo methodInfo, object target = null)
+        {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            var luaStateParameter = Expression.Parameter(typeof(IntPtr));
+            var argumentExpressions = new List<Expression>();
+            var methodParameters = methodInfo.GetParameters();
+            for (var i = 0; i < methodParameters.Length; ++i)
+            {
+                var parameter = methodParameters[i];
+                var getObjectCallExpression = Expression.Call(Expression.Constant(objectMarshal),
+                    typeof(ObjectMarshal).GetMethod("GetObject"), luaStateParameter, Expression.Constant(i + 1));
+                argumentExpressions.Add(Expression.Convert(getObjectCallExpression, parameter.ParameterType));
+            }
+
+            var methodCallExpression = Expression.Call(Expression.Constant(target), methodInfo, argumentExpressions);
+            var functionBody = new List<Expression> {methodCallExpression, Expression.Constant(0)};
+            var function = Expression
+                .Lambda<LuaModule.FunctionSignatures.LuaCFunction>(Expression.Block(functionBody.ToArray()),
+                    luaStateParameter).Compile();
+            return new LuaFunction(function, this);
+        }
 
         /// <summary>
         ///     Executes the specified Lua chunk and returns the results.
@@ -52,7 +96,18 @@ namespace LuaDotNet
         }
 
         /// <summary>
-        /// Loads the given Lua chunk into a <see cref="LuaFunction"/>.
+        ///     Returns the value of a global variable with the specified name.
+        /// </summary>
+        /// <param name="name">The name, which must not be <c>null</c>.</param>
+        /// <returns>The value.</returns>
+        public object GetGlobal(string name)
+        {
+            LuaModule.Instance.LuaGetGlobal(State, name);
+            return ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
+        }
+
+        /// <summary>
+        ///     Loads the given Lua chunk into a <see cref="LuaFunction" />.
         /// </summary>
         /// <param name="luaChunk">The chunk to load, which must not be <c>null</c>.</param>
         /// <returns>A reusable Lua function.</returns>
@@ -63,7 +118,7 @@ namespace LuaDotNet
             {
                 throw new ArgumentNullException(nameof(luaChunk));
             }
-            
+
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             if (LuaModule.Instance.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
             {
@@ -75,17 +130,6 @@ namespace LuaDotNet
             var function = (LuaFunction) objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
             return function;
-        }
-
-        /// <summary>
-        ///     Returns the value of a global variable with the specified name.
-        /// </summary>
-        /// <param name="name">The name, which must not be <c>null</c>.</param>
-        /// <returns>The value.</returns>
-        public object GetGlobal(string name)
-        {
-            LuaModule.Instance.LuaGetGlobal(State, name);
-            return ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
         }
 
         /// <summary>
@@ -151,17 +195,6 @@ namespace LuaDotNet
         {
             // TODO release unmanaged resources here
             LuaModule.Instance.LuaClose(State);
-        }
-
-        public void Dispose()
-        {
-            ReleaseUnmanagedResources();
-            GC.SuppressFinalize(this);
-        }
-
-        ~LuaContext()
-        {
-            ReleaseUnmanagedResources();
         }
     }
 }

@@ -121,7 +121,8 @@ namespace LuaDotNet
                 throw new LuaException("Cannot resume a dead coroutine.");
             }
 
-            LuaModule.Instance.LuaXMove(Lua.State, Lua.State, nargs); // Exchange the requested arguments between threads
+            LuaModule.Instance.LuaXMove(Lua.State, Lua.State,
+                nargs); // Exchange the requested arguments between threads
             var threadStatus = (LuaErrorCode) LuaModule.Instance.LuaResume(Lua.State, default(IntPtr), nargs, out _);
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield)
@@ -134,7 +135,8 @@ namespace LuaDotNet
                     throw new LuaException("The stack does not have enough space to fit that many results.");
                 }
 
-                LuaModule.Instance.LuaXMove(Lua.State, Lua.State, numberOfResults); // Propagate the results back to the caller
+                LuaModule.Instance.LuaXMove(Lua.State, Lua.State,
+                    numberOfResults); // Propagate the results back to the caller
 
                 res = new object[numberOfResults];
                 var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
@@ -149,7 +151,7 @@ namespace LuaDotNet
             else
             {
                 LuaModule.Instance.LuaXMove(Lua.State, Lua.State, 1); // Propagate the error message back to the caller
-                errorMsg = (string) objectMarshal.GetObject(Lua.State, -1)!; // Get the error message
+                errorMsg = (string) objectMarshal.GetObject(Lua.State, -1); // Get the error message
                 LuaModule.Instance.LuaPop(Lua.State, 1); // Pop the error message
                 success = false;
             }
@@ -191,7 +193,8 @@ namespace LuaDotNet
                 objectMarshal.PushToStack(Lua.State, arg);
             }
 
-            var threadStatus = (LuaErrorCode) LuaModule.Instance.LuaResume(Lua.State, default(IntPtr), args.Length, out _);
+            var threadStatus =
+                (LuaErrorCode) LuaModule.Instance.LuaResume(Lua.State, default(IntPtr), args.Length, out _);
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield)
             {
@@ -203,7 +206,8 @@ namespace LuaDotNet
                     throw new LuaException("The stack does not have enough space to fit that many results.");
                 }
 
-                LuaModule.Instance.LuaXMove(Lua.State, Lua.State, numberOfResults); // Propagate the results back to the caller
+                LuaModule.Instance.LuaXMove(Lua.State, Lua.State,
+                    numberOfResults); // Propagate the results back to the caller
 
                 res = new object[numberOfResults];
                 var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);

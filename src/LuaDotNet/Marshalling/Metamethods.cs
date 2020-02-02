@@ -9,10 +9,37 @@ namespace LuaDotNet.Marshalling
 {
     internal class Metamethods
     {
-        public const string NetTypeMetatable = "luadotnet_type";
+        public const string NetDelegateMetatable = "luadotnet_delegate";
         public const string NetObjectMetatable = "luadotnet_object";
+        public const string NetTypeMetatable = "luadotnet_type";
 
-        public static int CallType(IntPtr state)
+        public static void CreateMetatables(IntPtr state)
+        {
+            // Create the Type metatable
+            LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
+            PushMetamethod("__gc", Gc);
+            PushMetamethod("__call", CallType);
+            LuaModule.Instance.LuaPop(state, 1);
+
+            // Create the Object metatable
+            LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
+            PushMetamethod("__gc", Gc);
+            LuaModule.Instance.LuaPop(state, 1);
+
+            // Create the Delegate metatable
+            LuaModule.Instance.LuaLNewMetatable(state, NetDelegateMetatable);
+            PushMetamethod("__gc", Gc);
+            LuaModule.Instance.LuaPop(state, 1);
+
+            void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction)
+            {
+                LuaModule.Instance.LuaPushLString(state, metamethod);
+                LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
+                LuaModule.Instance.LuaSetTable(state, -3);
+            }
+        }
+
+        private static int CallType(IntPtr state)
         {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var type = LuaModule.Instance.UserdataToNetObject(state, 1) as Type;
@@ -36,27 +63,7 @@ namespace LuaDotNet.Marshalling
             return 1;
         }
 
-        public static void CreateMetatables(IntPtr state)
-        {
-            // Create the Type metatable
-            LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
-            PushMetamethod("__gc", Gc);
-            PushMetamethod("__call", CallType);
-            LuaModule.Instance.LuaPop(state, 1); 
-            
-            // Create the Object metatable
-            LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
-            LuaModule.Instance.LuaPop(state, 1);
-
-            void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction)
-            {
-                LuaModule.Instance.LuaPushLString(state, metamethod);
-                LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
-                LuaModule.Instance.LuaSetTable(state, -3);
-            }
-        }
-
-        public static int Gc(IntPtr luaState)
+        private static int Gc(IntPtr luaState)
         {
             GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(luaState, -1))).Free();
             return 0;

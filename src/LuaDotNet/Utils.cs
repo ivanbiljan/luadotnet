@@ -15,7 +15,7 @@ namespace LuaDotNet
             out object[] convertedArguments)
         {
             convertedArguments = new object[arguments.Length];
-            
+
             var possibleOverloads = new List<MethodBase>();
             foreach (var candidate in candidates)
             {

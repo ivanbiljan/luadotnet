@@ -4,6 +4,9 @@ using LuaDotNet.PInvoke;
 
 namespace LuaDotNet
 {
+    /// <summary>
+    ///     Represents the base class for Lua objects.
+    /// </summary>
     [PublicAPI]
     public abstract class LuaObject : IDisposable
     {
@@ -17,37 +20,46 @@ namespace LuaDotNet
 
         protected LuaContext Lua { get; }
 
-        protected int Reference { get; }
+        /// <summary>
+        ///     Gets the object's reference in the registry.
+        /// </summary>
+        public int Reference { get; }
 
-        private void ReleaseUnmanagedResources()
-        {
-            // TODO release unmanaged resources here
-            LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            ReleaseUnmanagedResources();
-            if (disposing)
-            {
-            }
-        }
-
+        /// <inheritdoc />
         public void Dispose()
         {
             if (_disposed)
             {
                 return;
             }
-            
+
             Dispose(true);
             GC.SuppressFinalize(this);
             _disposed = true;
         }
 
+        /// <summary>
+        ///     The finalizer.
+        /// </summary>
         ~LuaObject()
         {
             Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            ReleaseUnmanagedResources();
+        }
+
+        internal virtual void PushToStack(IntPtr state)
+        {
+            LuaModule.Instance.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
+        }
+
+        private void ReleaseUnmanagedResources()
+        {
+            // TODO release unmanaged resources here
+            LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
         }
     }
 }

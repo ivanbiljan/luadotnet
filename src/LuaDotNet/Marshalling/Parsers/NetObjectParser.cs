@@ -3,7 +3,7 @@
 namespace LuaDotNet.Marshalling
 {
     /// <summary>
-    /// Represents a default .NET object parser.
+    ///     Represents a default .NET object parser.
     /// </summary>
     public sealed class NetObjectParser : ITypeParser
     {

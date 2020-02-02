@@ -6,11 +6,10 @@ using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling
 {
-    // TODO: Is the LuaContext dependency (absolutely) necessary? --> Guess not
-    // TODO: Use ObjectMarshal pools like NLua does? --> Done
-
     internal sealed class ObjectMarshal
     {
+        private readonly LuaContext _lua;
+
         private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
         {
             [typeof(string)] = () => new StringParser(),
@@ -29,6 +28,11 @@ namespace LuaDotNet.Marshalling
             [typeof(Type)] = () => new NetTypeTypeParser(),
             [typeof(object)] = () => new NetObjectParser()
         };
+
+        public ObjectMarshal(LuaContext lua)
+        {
+            _lua = lua ?? throw new ArgumentNullException(nameof(lua));
+        }
 
         public object GetObject(IntPtr state, int stackIndex)
         {
@@ -53,7 +57,7 @@ namespace LuaDotNet.Marshalling
                     objectType = typeof(Array);
                     break;
                 case LuaType.Function:
-                    break;
+                    return new LuaFunction(_lua, GetRegistryReference());
                 case LuaType.Userdata:
                     break;
                 case LuaType.Thread:
@@ -69,6 +73,12 @@ namespace LuaDotNet.Marshalling
             }
 
             return parser().Parse(state, stackIndex);
+
+            int GetRegistryReference()
+            {
+                LuaModule.Instance.LuaPushValue(state, stackIndex);
+                return LuaModule.Instance.LuaLRef(state, (int) LuaRegistry.RegistryIndex);
+            }
         }
 
         public void PushToStack(IntPtr state, object obj)
@@ -81,7 +91,8 @@ namespace LuaDotNet.Marshalling
 
             if (obj is LuaObject luaObject)
             {
-                
+                luaObject.PushToStack(state);
+                return;
             }
 
             var objType = obj.GetType();
