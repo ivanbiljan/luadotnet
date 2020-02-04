@@ -11,11 +11,11 @@ namespace LuaDotNet.Marshalling {
 
         public void Push(object obj, IntPtr state) {
             if (obj.GetType().IsInteger()) {
-                LuaModule.Instance.LuaPushInteger(state, (long) obj);
+                LuaModule.Instance.LuaPushInteger(state, (long) Convert.ChangeType(obj, typeof(long)));
                 return;
             }
 
-            LuaModule.Instance.LuaPushNumber(state, (double) obj);
+            LuaModule.Instance.LuaPushNumber(state, (double) Convert.ChangeType(obj, typeof(double)));
         }
     }
 }

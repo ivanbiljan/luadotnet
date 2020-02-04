@@ -8,14 +8,56 @@ using LuaDotNet.Extensions;
 using NLdr;
 using NLdr.Framework;
 using LuaInteger = System.Int64; // Just to avoid improper marshalling
+#pragma warning disable 649
 
 namespace LuaDotNet.PInvoke {
     internal sealed class LuaModule : NativeLibrary {
         public const int LuaMultRet = -1;
 
+        public FunctionSignatures.LuaCheckStack LuaCheckStack;
+        public FunctionSignatures.LuaClose LuaClose;
+        public FunctionSignatures.LuaCreateTable LuaCreateTable;
+        public FunctionSignatures.LuaGetField LuaGetField;
+        public FunctionSignatures.LuaGetGlobal LuaGetGlobal;
+        public FunctionSignatures.LuaGetStack LuaGetStack;
+        public FunctionSignatures.LuaGetTop LuaGetTop;
+        public FunctionSignatures.LuaIsInteger LuaIsInteger;
+        public FunctionSignatures.LuaLLoadString LuaLLoadString;
+        public FunctionSignatures.LuaLNewMetatable LuaLNewMetatable;
+        public FunctionSignatures.LuaLNewState LuaLNewState;
+        public FunctionSignatures.LuaLRef LuaLRef;
+        public FunctionSignatures.LuaLUnref LuaLUnref;
+        public FunctionSignatures.LuaNewThread LuaNewThread;
+        private FunctionSignatures.LuaNewUserdata LuaNewUserdata;
+        public FunctionSignatures.LuaNext LuaNext;
+        public FunctionSignatures.LuaPCallK LuaPCallK;
+        public FunctionSignatures.LuaPushBoolean LuaPushBoolean;
+        public FunctionSignatures.LuaPushCClosure LuaPushCClosure;
+        public FunctionSignatures.LuaPushInteger LuaPushInteger;
+        private FunctionSignatures.LuaPushLString LuaPushLStringDelegate;
+        public FunctionSignatures.LuaPushNil LuaPushNil;
+        public FunctionSignatures.LuaPushNumber LuaPushNumber;
+        public FunctionSignatures.LuaPushValue LuaPushValue;
+        public FunctionSignatures.LuaRawGetI LuaRawGetI;
+        public FunctionSignatures.LuaRawSetI LuaRawSetI;
+        public FunctionSignatures.LuaResume LuaResume;
+        public FunctionSignatures.LuaSetGlobal LuaSetGlobal;
+        public FunctionSignatures.LuaSetMetatable LuaSetMetatable;
+        public FunctionSignatures.LuaSetTable LuaSetTable;
+        public FunctionSignatures.LuaSetTop LuaSetTop;
+        public FunctionSignatures.LuaStatus LuaStatus;
+        public FunctionSignatures.LuaToBoolean LuaToBoolean;
+        public FunctionSignatures.LuaToIntegerX LuaToIntegerX;
+        public FunctionSignatures.LuaToLString LuaToLString;
+        public FunctionSignatures.LuaToNumberX LuaToNumberX;
+        public FunctionSignatures.LuaToPointer LuaToPointer;
+        public FunctionSignatures.LuaToThread LuaToThread;
+        public FunctionSignatures.LuaToUserdata LuaToUserdata;
+        public FunctionSignatures.LuaTypeD LuaType;
+        public FunctionSignatures.LuaXMove LuaXMove;
+
         static LuaModule() {
-            var runtimesDirectory =
-                Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
+            var runtimesDirectory = Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
             if (runtimesDirectory.IsNullOrWhitespace()) {
                 throw new DirectoryNotFoundException("Cannot find Lua runtimes directory.");
             }
@@ -278,49 +320,5 @@ namespace LuaDotNet.PInvoke {
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
         }
-
-#pragma warning disable 649 
-        public FunctionSignatures.LuaClose LuaClose;
-        public FunctionSignatures.LuaGetGlobal LuaGetGlobal;
-        public FunctionSignatures.LuaSetGlobal LuaSetGlobal;
-        public FunctionSignatures.LuaLNewState LuaLNewState;
-        public FunctionSignatures.LuaPushBoolean LuaPushBoolean;
-        public FunctionSignatures.LuaPushCClosure LuaPushCClosure;
-        public FunctionSignatures.LuaPushInteger LuaPushInteger;
-        public FunctionSignatures.LuaPushLString LuaPushLStringDelegate;
-        public FunctionSignatures.LuaPushNil LuaPushNil;
-        public FunctionSignatures.LuaPushNumber LuaPushNumber;
-        public FunctionSignatures.LuaPushValue LuaPushValue;
-        public FunctionSignatures.LuaTypeD LuaType;
-        public FunctionSignatures.LuaToLString LuaToLString;
-        public FunctionSignatures.LuaIsInteger LuaIsInteger;
-        public FunctionSignatures.LuaToBoolean LuaToBoolean;
-        public FunctionSignatures.LuaToIntegerX LuaToIntegerX;
-        public FunctionSignatures.LuaToNumberX LuaToNumberX;
-        public FunctionSignatures.LuaGetTop LuaGetTop;
-        public FunctionSignatures.LuaCreateTable LuaCreateTable;
-        public FunctionSignatures.LuaRawSetI LuaRawSetI;
-        public FunctionSignatures.LuaRawGetI LuaRawGetI;
-        public FunctionSignatures.LuaSetTop LuaSetTop;
-        public FunctionSignatures.LuaNext LuaNext;
-        public FunctionSignatures.LuaPCallK LuaPCallK;
-        public FunctionSignatures.LuaLLoadString LuaLLoadString;
-        public FunctionSignatures.LuaNewUserdata LuaNewUserdata;
-        public FunctionSignatures.LuaToUserdata LuaToUserdata;
-        public FunctionSignatures.LuaSetMetatable LuaSetMetatable;
-        public FunctionSignatures.LuaGetField LuaGetField;
-        public FunctionSignatures.LuaLNewMetatable LuaLNewMetatable;
-        public FunctionSignatures.LuaSetTable LuaSetTable;
-        public FunctionSignatures.LuaLRef LuaLRef;
-        public FunctionSignatures.LuaLUnref LuaLUnref;
-        public FunctionSignatures.LuaCheckStack LuaCheckStack;
-        public FunctionSignatures.LuaResume LuaResume;
-        public FunctionSignatures.LuaXMove LuaXMove;
-        public FunctionSignatures.LuaStatus LuaStatus;
-        public FunctionSignatures.LuaToThread LuaToThread;
-        public FunctionSignatures.LuaToPointer LuaToPointer;
-        public FunctionSignatures.LuaGetStack LuaGetStack;
-        public FunctionSignatures.LuaNewThread LuaNewThread;
-#pragma warning restore 649
     }
 }
