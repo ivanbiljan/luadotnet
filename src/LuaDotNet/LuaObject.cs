@@ -50,6 +50,10 @@ namespace LuaDotNet {
 
         private void ReleaseUnmanagedResources() {
             // TODO release unmanaged resources here
+            if (Reference == LuaModule.LuaRefNil || Reference == LuaModule.LuaNoRef) {
+                return;
+            }
+            
             LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
         }
     }

@@ -14,12 +14,12 @@ namespace LuaDotNet {
         internal LuaFunction(LuaContext lua, int reference) : base(lua, reference) {
         }
 
-        internal LuaFunction(LuaContext lua, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) : base(lua, 0) {
+        internal LuaFunction(LuaContext lua, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) : base(lua, LuaModule.LuaNoRef) {
             _luaCFunction = luaCFunction ?? throw new ArgumentNullException(nameof(luaCFunction));
         }
 
         internal override void PushToStack(IntPtr state) {
-            if (Reference == 0) {
+            if (Reference == LuaModule.LuaNoRef) {
                 LuaModule.Instance.LuaPushCClosure(state, _luaCFunction, 0);
                 return;
             }

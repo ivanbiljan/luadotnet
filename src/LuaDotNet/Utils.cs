@@ -43,7 +43,7 @@ namespace LuaDotNet {
             return possibleOverloads.ElementAtOrDefault(0);
         }
 
-        private static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
+        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
             resultObj = obj;
             switch (obj) {
                 case long _ when type.IsInteger():
@@ -53,6 +53,10 @@ namespace LuaDotNet {
                 default:
                     return type.IsInstanceOfType(obj);
             }
+        }
+
+        public static object CoerceObject(object obj, Type type) {
+            return TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
         }
     }
 }

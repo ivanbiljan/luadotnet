@@ -13,6 +13,8 @@ using LuaInteger = System.Int64; // Just to avoid improper marshalling
 namespace LuaDotNet.PInvoke {
     internal sealed class LuaModule : NativeLibrary {
         public const int LuaMultRet = -1;
+        public const int LuaRefNil = -1;
+        public const int LuaNoRef = -2;
 
         public FunctionSignatures.LuaCheckStack LuaCheckStack;
         public FunctionSignatures.LuaClose LuaClose;

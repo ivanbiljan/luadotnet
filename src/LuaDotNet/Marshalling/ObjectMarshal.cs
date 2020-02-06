@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
@@ -106,6 +107,7 @@ namespace LuaDotNet.Marshalling {
             }
 
             parser().Push(obj, state);
+            return;
         }
 
         public void RegisterTypeParser(Type type, ITypeParser typeParser) {

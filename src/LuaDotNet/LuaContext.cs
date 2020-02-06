@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -10,6 +11,18 @@ using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet {
+    internal class ParameterReplacer : ExpressionVisitor {
+        private readonly ParameterExpression _parameter;
+
+        protected override Expression VisitParameter(ParameterExpression node) {
+            return base.VisitParameter(_parameter);
+        }
+
+        internal ParameterReplacer(ParameterExpression parameter) {
+            _parameter = parameter;
+        }
+    }
+
     /// <summary>
     ///     Represents an independent Lua context.
     /// </summary>
@@ -94,17 +107,26 @@ namespace LuaDotNet {
 
             var luaStateParameter = Expression.Parameter(typeof(IntPtr));
             var argumentExpressions = new List<Expression>();
+            
             var methodParameters = methodInfo.GetParameters();
             for (var i = 0; i < methodParameters.Length; ++i) {
                 var parameter = methodParameters[i];
-                var getObjectCallExpression = Expression.Call(Expression.Constant(objectMarshal),
-                    objectMarshalGetObjectMethod, luaStateParameter, Expression.Constant(i + 1));
-                argumentExpressions.Add(Expression.Convert(getObjectCallExpression, parameter.ParameterType));
+                var getObjectCallExpression = Expression.Call(
+                    Expression.Constant(objectMarshal),
+                    objectMarshalGetObjectMethod,
+                    luaStateParameter,
+                    Expression.Constant(i + 1));
+                var coerceObjectCallExpression = Expression.Call(
+                    typeof(Utils).GetMethod("CoerceObject"),
+                    getObjectCallExpression,
+                    Expression.Constant(parameter.ParameterType));
+                argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
             }
 
             var methodCallExpression = Expression.Call(Expression.Constant(target), methodInfo, argumentExpressions);
-            var functionBody = new List<Expression> {methodCallExpression};
+            var functionBody = new List<Expression>();
             if (methodInfo.ReturnType == typeof(void)) {
+                functionBody.Add(methodCallExpression);
                 functionBody.Add(Expression.Constant(0));
             }
             else {
@@ -115,9 +137,9 @@ namespace LuaDotNet {
                 functionBody.Add(Expression.Constant(1));
             }
 
-            var function = Expression
-                .Lambda<LuaModule.FunctionSignatures.LuaCFunction>(Expression.Block(functionBody.ToArray()), luaStateParameter).Compile();
-            return new LuaFunction(this, function);
+            var functionExpression = Expression.Block(functionBody.ToArray());
+            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter).Compile();
+            return new LuaFunction(this, luaCFunction);
         }
 
         /// <summary>
