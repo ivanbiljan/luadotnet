@@ -11,18 +11,6 @@ using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet {
-    internal class ParameterReplacer : ExpressionVisitor {
-        private readonly ParameterExpression _parameter;
-
-        protected override Expression VisitParameter(ParameterExpression node) {
-            return base.VisitParameter(_parameter);
-        }
-
-        internal ParameterReplacer(ParameterExpression parameter) {
-            _parameter = parameter;
-        }
-    }
-
     /// <summary>
     ///     Represents an independent Lua context.
     /// </summary>
