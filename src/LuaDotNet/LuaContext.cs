@@ -105,7 +105,7 @@ namespace LuaDotNet {
                     luaStateParameter,
                     Expression.Constant(i + 1));
                 var coerceObjectCallExpression = Expression.Call(
-                    typeof(Utils).GetMethod("CoerceObject"),
+                    typeof(Utils).GetMethod("CoerceObjectMaybe"),
                     getObjectCallExpression,
                     Expression.Constant(parameter.ParameterType));
                 argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));

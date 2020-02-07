@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 
@@ -55,7 +56,8 @@ namespace LuaDotNet {
             }
         }
 
-        public static object CoerceObject(object obj, Type type) {
+        [UsedImplicitly]
+        public static object CoerceObjectMaybe(object obj, Type type) {
             return TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
         }
     }
