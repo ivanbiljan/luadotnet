@@ -107,7 +107,6 @@ namespace LuaDotNet.Marshalling {
             }
 
             parser().Push(obj, state);
-            return;
         }
 
         public void RegisterTypeParser(Type type, ITypeParser typeParser) {

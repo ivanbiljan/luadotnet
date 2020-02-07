@@ -150,7 +150,7 @@ namespace LuaDotNet {
 
             // Lua pushes an error message in case of errors
             var errorMessage = (string) objectMarshal.GetObject(State, -1);
-            LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
+            LuaModule.Instance.LuaPop(State, 1); 
             throw new LuaException($"[{errorCode}]: {errorMessage}");
         }
 
@@ -231,13 +231,11 @@ namespace LuaDotNet {
             // Adjust the number of results to avoid errors
             numberOfResults = Math.Max(numberOfResults, -1);
             LuaErrorCode errorCode;
-            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Count ?? 0, numberOfResults)) !=
-                LuaErrorCode.LuaOk) {
+            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Count ?? 0, numberOfResults)) != LuaErrorCode.LuaOk) {
                 // Lua pushes an error message in case of errors
                 var errorMessage = (string) objectMarshal.GetObject(State, -1);
-                LuaModule.Instance.LuaPop(State, 1); // Pop the error message and throw an exception
-                throw new LuaException(
-                    $"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
+                LuaModule.Instance.LuaPop(State, 1);
+                throw new LuaException($"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
             }
 
             var results = objectMarshal.GetObjects(State, stackTop + 1, LuaModule.Instance.LuaGetTop(State));
