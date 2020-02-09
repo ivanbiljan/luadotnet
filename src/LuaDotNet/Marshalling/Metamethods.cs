@@ -14,7 +14,8 @@ namespace LuaDotNet.Marshalling {
     internal static class Metamethods {
         private static readonly Dictionary<string, LuaCFunction> TypeMetamethods = new Dictionary<string, LuaCFunction> {
             ["__gc"] = Gc,
-            ["__call"] = CallType
+            ["__call"] = CallType,
+            ["__index"] = GetTypeMember
         };
 
         private static readonly Dictionary<string, LuaCFunction> ObjectMetamethods = new Dictionary<string, LuaCFunction> {
@@ -26,13 +27,16 @@ namespace LuaDotNet.Marshalling {
 
         public static void CreateMetatables(IntPtr state) {
             LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
+            PushMetamethod("__gc", TypeMetamethods["__gc"]);
             PushMetamethod("__call", TypeMetamethods["__call"]);
+            PushMetamethod("__index", TypeMetamethods["__index"]);
             LuaModule.Instance.LuaPop(state, 1);
             
             LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
+            PushMetamethod("__gc", ObjectMetamethods["__gc"]);
             LuaModule.Instance.LuaPop(state, 1);
 
-            void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) {
+            void PushMetamethod(string metamethod, LuaCFunction luaCFunction) {
                 LuaModule.Instance.LuaPushLString(state, metamethod);
                 LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
                 LuaModule.Instance.LuaSetTable(state, -3);
@@ -58,8 +62,67 @@ namespace LuaDotNet.Marshalling {
             return 1;
         }
 
-        private static int Gc(IntPtr luaState) {
-            GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(luaState, -1))).Free();
+        private static int GetTypeMember(IntPtr state) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var type = objectMarshal.GetObject(state, 1) as Type;
+            if (type == null) {
+                throw new LuaException("Attempt to index a null type reference.");
+            }
+
+            var memberName = objectMarshal.GetObject(state, 2) as string;
+            if (memberName == null) {
+                throw new LuaException("Expected a proper member name.");
+            }
+
+            var members = type.GetOrCreateMetadata().GetMembers(memberName).ToArray();
+            Debug.WriteLine(string.Join(", ", members.Select(m => m.Name)));
+            if (members.Length > 1) {
+                throw new LuaException("Ambiguous member name.");
+            }
+
+            var member = members.ElementAtOrDefault(0);
+            if (member == null) {
+                throw new LuaException("Invalid member name.");
+            }
+            
+            switch (member.MemberType) {
+                case MemberTypes.Event: // TODO
+                    break;
+                case MemberTypes.Field:
+                    var field = (FieldInfo) member;
+                    try {
+                        objectMarshal.PushToStack(state, field.GetValue(null));
+                    }
+                    catch (TargetInvocationException ex) {
+                        throw new LuaException($"An exception has occured while indexing a type's field: {ex}");
+                    }
+                    break;
+                case MemberTypes.Method:
+                    var method = (MethodInfo) member;
+                    try {
+                        // Build up an expression / Lua function wrapper
+                    }
+                    catch (TargetInvocationException ex) {
+                        
+                    }
+                    break;
+                case MemberTypes.NestedType:
+                    break;
+                case MemberTypes.Property:
+                    var property = (PropertyInfo) member;
+                    try {
+                        objectMarshal.PushToStack(state, property.GetValue(null, null));
+                    }
+                    catch (TargetInvocationException ex) {
+                        throw new LuaException($"An exception has occured while indexing a type's property: {ex}");
+                    }
+                    break;
+            }
+            return 1;
+        }
+
+        private static int Gc(IntPtr state) {
+            GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(state, -1))).Free();
             return 0;
         }
     }
