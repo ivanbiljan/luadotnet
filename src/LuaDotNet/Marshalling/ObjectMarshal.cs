@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
+using LuaDotNet.Marshalling.Parsers;
 
 namespace LuaDotNet.Marshalling {
     internal sealed class ObjectMarshal {
+        private readonly NetObjectParser _defaultNetObjectParser = new NetObjectParser();
         private readonly LuaContext _lua;
-
         private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>> {
             [typeof(string)] = () => new StringParser(),
             [typeof(sbyte)] = () => new NumberParser(),
@@ -22,9 +24,7 @@ namespace LuaDotNet.Marshalling {
             [typeof(float)] = () => new NumberParser(),
             [typeof(double)] = () => new NumberParser(),
             [typeof(bool)] = () => new BooleanParser(),
-            [typeof(Array)] = () => new ArrayParser(),
-            [typeof(Type)] = () => new NetTypeTypeParser(),
-            [typeof(object)] = () => new NetObjectParser()
+            [typeof(Array)] = () => new ArrayParser()
         };
 
         public ObjectMarshal(LuaContext lua) {
@@ -41,7 +41,7 @@ namespace LuaDotNet.Marshalling {
                     objectType = typeof(bool);
                     break;
                 case LuaType.LightUserdata:
-                    break;
+                    throw new NotSupportedException();
                 case LuaType.Number:
                     objectType = typeof(long);
                     break;
@@ -54,7 +54,7 @@ namespace LuaDotNet.Marshalling {
                 case LuaType.Function:
                     return new LuaFunction(_lua, GetRegistryReference());
                 case LuaType.Userdata:
-                    break;
+                    return LuaModule.Instance.UserdataToNetObject(state, stackIndex);
                 case LuaType.Thread:
                     return new LuaCoroutine(_lua, GetRegistryReference());
                 default:
@@ -63,7 +63,7 @@ namespace LuaDotNet.Marshalling {
 
             var parser = _typeParsers.GetValueOrDefault(objectType);
             if (parser == null) {
-                throw new LuaException($"Missing parser for type '{objectType.Name}'");
+                return _defaultNetObjectParser.Parse(state, stackIndex);
             }
 
             return parser().Parse(state, stackIndex);
@@ -93,20 +93,15 @@ namespace LuaDotNet.Marshalling {
                 luaObject.PushToStack(state);
                 return;
             }
-
+            
             var objType = obj.GetType();
             var parser = _typeParsers.GetValueOrDefault(objType);
-            while (parser == null && objType.BaseType != null) {
-                parser = _typeParsers.GetValueOrDefault(objType.BaseType);
-                objType = objType.BaseType;
-            }
-
             if (parser == null) {
-                // TODO: Use some form of a default parser
-                throw new LuaException($"Missing parser for type '{objType.Name}'");
+                _defaultNetObjectParser.Push(obj, state);
             }
-
-            parser().Push(obj, state);
+            else {
+                parser().Push(obj, state);
+            }
         }
 
         public void RegisterTypeParser(Type type, ITypeParser typeParser) {

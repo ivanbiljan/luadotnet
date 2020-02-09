@@ -9,9 +9,6 @@ namespace LuaDotNet.Extensions {
     ///     Provides extension methods for the <see cref="Type" /> type.
     /// </summary>
     public static class TypeExtensions {
-        /// <summary>
-        ///     Gets the metadata cache.
-        /// </summary>
         private static readonly ConditionalWeakTable<Type, TypeMetadata> MetadataCache =
             new ConditionalWeakTable<Type, TypeMetadata>();
 

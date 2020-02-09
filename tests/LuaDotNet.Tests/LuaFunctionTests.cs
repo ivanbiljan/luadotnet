@@ -1,9 +1,10 @@
 ﻿using System;
 using LuaDotNet;
+using LuaDotNet.Exceptions;
 using NUnit.Compatibility;
 using NUnit.Framework;
 
-namespace Tests {
+namespace LuaDotNet.Tests {
     public sealed class LuaFunctionTests {
         private readonly Func<int, int, int> _testDelegate = (x, y) => x + y;
 
@@ -12,6 +13,13 @@ namespace Tests {
             using (var lua = new LuaContext()) {
                 var function = lua.LoadString("return 5");
                 Assert.AreEqual(5, function.Call()[0]);
+            }
+        }
+
+        [Test]
+        public void LoadString_SyntaxError_ThrowsLuaException() {
+            using (var lua = new LuaContext()) {
+                Assert.Throws<LuaException>(() => lua.DoString("test = "));
             }
         }
 
@@ -28,9 +36,8 @@ namespace Tests {
         [Test]
         public void CreateFunction_Delegate_IsCorrect() {
             using (var lua = new LuaContext()) {
-                using (var function = lua.CreateFunction(_testDelegate)) {
-                    Assert.AreEqual(5, function.Call(2, 3)[0]);
-                }
+                var function = lua.CreateFunction(_testDelegate);
+                Assert.AreEqual(5, function.Call(2, 3)[0]);
             }
         }
 

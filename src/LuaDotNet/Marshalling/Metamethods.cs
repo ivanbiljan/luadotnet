@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using LuaDotNet.Exceptions;
@@ -7,20 +10,21 @@ using LuaDotNet.PInvoke;
 using static LuaDotNet.Utils;
 
 namespace LuaDotNet.Marshalling {
-    internal class Metamethods {
+    internal static class Metamethods {
+        private static readonly Dictionary<string, LuaModule.FunctionSignatures.LuaCFunction> Functions =
+            new Dictionary<string, LuaModule.FunctionSignatures.LuaCFunction> {
+                ["__call"] = CallType
+            };
+
         public const string NetObjectMetatable = "luadotnet_object";
         public const string NetTypeMetatable = "luadotnet_type";
 
         public static void CreateMetatables(IntPtr state) {
-            // Create the Type metatable
             LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
-            PushMetamethod("__gc", Gc);
-            PushMetamethod("__call", CallType);
+            PushMetamethod("__call", Functions["__call"]);
             LuaModule.Instance.LuaPop(state, 1);
-
-            // Create the Object metatable
+            
             LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
-            PushMetamethod("__gc", Gc);
             LuaModule.Instance.LuaPop(state, 1);
 
             void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) {
@@ -33,15 +37,19 @@ namespace LuaDotNet.Marshalling {
         private static int CallType(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var type = LuaModule.Instance.UserdataToNetObject(state, 1) as Type;
+            if (type == null) {
+                throw new LuaException("Attempt to instantiate a null type reference.");
+            }
+            
             var typeMetadata = type.GetOrCreateMetadata();
             var arguments = objectMarshal.GetObjects(state, 2, LuaModule.Instance.LuaGetTop(state));
             var constructor = TryResolveMethodCall(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
             if (constructor == null) {
-                throw new LuaException(
-                    $"Type {type.Name} does not contain a constructor that contains the provided arguments.");
+                throw new LuaException($"No candidates for {type.Name}({string.Join(", ", arguments.Select(a => a.GetType().Name))})");
             }
-
-            objectMarshal.PushToStack(state, constructor.Invoke(convertedArguments));
+            
+            var result = constructor.Invoke(convertedArguments);
+            objectMarshal.PushToStack(state, result);
             return 1;
         }
 

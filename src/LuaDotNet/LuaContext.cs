@@ -166,7 +166,9 @@ namespace LuaDotNet {
             }
 
             LuaModule.Instance.LuaGetGlobal(State, name);
-            return ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
+            var obj = ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            return obj;
         }
 
         /// <summary>
