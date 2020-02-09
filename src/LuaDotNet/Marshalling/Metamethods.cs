@@ -7,21 +7,26 @@ using System.Runtime.InteropServices;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
+using LuaCFunction = LuaDotNet.PInvoke.LuaModule.FunctionSignatures.LuaCFunction;
 using static LuaDotNet.Utils;
 
 namespace LuaDotNet.Marshalling {
     internal static class Metamethods {
-        private static readonly Dictionary<string, LuaModule.FunctionSignatures.LuaCFunction> Functions =
-            new Dictionary<string, LuaModule.FunctionSignatures.LuaCFunction> {
-                ["__call"] = CallType
-            };
+        private static readonly Dictionary<string, LuaCFunction> TypeMetamethods = new Dictionary<string, LuaCFunction> {
+            ["__gc"] = Gc,
+            ["__call"] = CallType
+        };
+
+        private static readonly Dictionary<string, LuaCFunction> ObjectMetamethods = new Dictionary<string, LuaCFunction> {
+            ["__gc"] = Gc
+        };
 
         public const string NetObjectMetatable = "luadotnet_object";
         public const string NetTypeMetatable = "luadotnet_type";
 
         public static void CreateMetatables(IntPtr state) {
             LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
-            PushMetamethod("__call", Functions["__call"]);
+            PushMetamethod("__call", TypeMetamethods["__call"]);
             LuaModule.Instance.LuaPop(state, 1);
             
             LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
