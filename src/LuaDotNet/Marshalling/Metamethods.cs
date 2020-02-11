@@ -14,12 +14,14 @@ namespace LuaDotNet.Marshalling {
     internal static class Metamethods {
         private static readonly Dictionary<string, LuaCFunction> TypeMetamethods = new Dictionary<string, LuaCFunction> {
             ["__gc"] = Gc,
+            ["__tostring"] = ToString,
             ["__call"] = CallType,
             ["__index"] = GetTypeMember
         };
 
         private static readonly Dictionary<string, LuaCFunction> ObjectMetamethods = new Dictionary<string, LuaCFunction> {
-            ["__gc"] = Gc
+            ["__gc"] = Gc,
+            ["__tostring"] = ToString
         };
 
         public const string NetObjectMetatable = "luadotnet_object";
@@ -75,7 +77,6 @@ namespace LuaDotNet.Marshalling {
             }
 
             var members = type.GetOrCreateMetadata().GetMembers(memberName).ToArray();
-            Debug.WriteLine(string.Join(", ", members.Select(m => m.Name)));
             if (members.Length > 1) {
                 throw new LuaException("Ambiguous member name.");
             }
@@ -89,8 +90,8 @@ namespace LuaDotNet.Marshalling {
                 case MemberTypes.Event: // TODO
                     break;
                 case MemberTypes.Field:
-                    var field = (FieldInfo) member;
                     try {
+                        var field = (FieldInfo) member;
                         objectMarshal.PushToStack(state, field.GetValue(null));
                     }
                     catch (TargetInvocationException ex) {
@@ -98,12 +99,13 @@ namespace LuaDotNet.Marshalling {
                     }
                     break;
                 case MemberTypes.Method:
-                    var method = (MethodInfo) member;
                     try {
-                        // Build up an expression / Lua function wrapper
+                        var method = (MethodInfo) member;
+                        var wrapper = new MethodWrapper(method);
+                        LuaModule.Instance.LuaPushCClosure(state, wrapper.Callback, 0);
                     }
                     catch (TargetInvocationException ex) {
-                        
+                        throw new LuaException($"An exception has occured while indexing a type's method: {ex}");
                     }
                     break;
                 case MemberTypes.NestedType:
@@ -118,6 +120,7 @@ namespace LuaDotNet.Marshalling {
                     }
                     break;
             }
+            
             return 1;
         }
 
@@ -125,5 +128,17 @@ namespace LuaDotNet.Marshalling {
             GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(state, -1))).Free();
             return 0;
         }
+
+        private static int ToString(IntPtr state) {
+            var obj = LuaModule.Instance.UserdataToNetObject(state, 1);
+            if (obj == null) {
+                LuaModule.Instance.LuaPushNil(state);
+            }
+            else {
+                LuaModule.Instance.LuaPushLString(state, obj.ToString());
+            }
+
+            return 1;
+        } 
     }
 }
