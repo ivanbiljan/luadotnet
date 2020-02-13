@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using LuaDotNet;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
-using NUnit.Framework;
+using Xunit;
 
 namespace LuaDotNet.Tests.Marshalling {
     public sealed class TypeTests {
@@ -20,36 +20,37 @@ namespace LuaDotNet.Tests.Marshalling {
                 TestProperty = testProperty;
             }
 
-            public static string StaticMethod(string what) {
+            public static string StaticMethod(string what = null) {
                 return what.IsNullOrWhitespace() ?  nameof(StaticMethod) : what;
             }
         }
 
-        [Test]
+        [Fact]
         public void CallStaticMethod_NoArgs_IsCorrect() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.AreEqual(nameof(TestClass.StaticMethod), lua.DoString("return TestClass.StaticMethod()")[0]);
+                Assert.Equal(nameof(TestClass.StaticMethod), lua.DoString("return TestClass.StaticMethod()")[0]);
             }
         }
 
-        [TestCase("test string")]
+        [Theory]
+        [InlineData("test string")]
         public void CallStaticMethod_WithArgs_IsCorrect(string arg) {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.AreEqual(arg, lua.DoString($"return TestClass.StaticMethod('{arg}')")[0]);
+                Assert.Equal(arg, lua.DoString($"return TestClass.StaticMethod('{arg}')")[0]);
             }
         }
 
-        [Test]
+        [Fact]
         public void IndexType_IsCorrect() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.AreEqual(nameof(TestClass.StaticProperty), lua.DoString("return TestClass.StaticProperty")[0]);
+                Assert.Equal(nameof(TestClass.StaticProperty), lua.DoString("return TestClass.StaticProperty")[0]);
             }
         }
 
-        [Test]
+        [Fact]
         public void IndexType_NonStringMember_ThrowsLuaException() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
@@ -57,7 +58,7 @@ namespace LuaDotNet.Tests.Marshalling {
             }
         }
 
-        [Test]
+        [Fact]
         public void IndexType_InvalidMember_ThrowsLuaException() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
@@ -65,8 +66,9 @@ namespace LuaDotNet.Tests.Marshalling {
             }
         }
 
-        [TestCase("test1")]
-        [TestCase("test2")]
+        [Theory]
+        [InlineData("test1")]
+        [InlineData("test2")]
         public void TypeCtor_Arguments_IsCorrect(string argument) {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
@@ -74,11 +76,11 @@ namespace LuaDotNet.Tests.Marshalling {
                 
                 var instance = lua.GetGlobal("instance") as TestClass;
                 Assert.NotNull(instance);
-                Assert.AreEqual(argument, instance.TestProperty);
+                Assert.Equal(argument, instance.TestProperty);
             }
         }
 
-        [Test]
+        [Fact]
         public void TypeCtor_DefaultCtor_IsCorrect() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));
@@ -86,11 +88,11 @@ namespace LuaDotNet.Tests.Marshalling {
 
                 var instance = lua.GetGlobal("instance") as TestClass;
                 Assert.NotNull(instance);
-                Assert.AreEqual("Hello, World", instance.TestProperty);
+                Assert.Equal("Hello, World", instance.TestProperty);
             }
         }
 
-        [Test]
+        [Fact]
         public void TypeCtor_NullType_ThrowsLuaException() {
             using (var lua = new LuaContext()) {
                 // ReSharper disable once RedundantCast
@@ -99,7 +101,7 @@ namespace LuaDotNet.Tests.Marshalling {
             } 
         }
         
-        [Test]
+        [Fact]
         public void TypeCtor_InvalidCtor_ThrowsLuaException() {
             using (var lua = new LuaContext()) {
                 lua.SetGlobal("TestClass", typeof(TestClass));

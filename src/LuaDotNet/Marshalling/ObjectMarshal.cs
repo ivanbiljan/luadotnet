@@ -49,8 +49,8 @@ namespace LuaDotNet.Marshalling {
                     objectType = typeof(string);
                     break;
                 case LuaType.Table:
-                    objectType = typeof(Array);
-                    break;
+                    //objectType = typeof(Array); Hmm
+                    return new LuaTable(_lua, GetRegistryReference());
                 case LuaType.Function:
                     return new LuaFunction(_lua, GetRegistryReference());
                 case LuaType.Userdata:

@@ -77,6 +77,14 @@ namespace LuaDotNet {
             return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
         }
 
+        public LuaTable CreateTable(int numberOfSeqElements = 0, int numberOfOtherElements = 0) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            LuaModule.Instance.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
+            var table = (LuaTable) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            return table;
+        }
+
         /// <summary>
         ///     Creates and returns a Lua function which once executed runs the method represented by the specified object.
         /// </summary>

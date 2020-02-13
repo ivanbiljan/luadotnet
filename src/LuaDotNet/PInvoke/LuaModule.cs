@@ -57,6 +57,7 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaToUserdata LuaToUserdata;
         public FunctionSignatures.LuaTypeD LuaType;
         public FunctionSignatures.LuaXMove LuaXMove;
+        public FunctionSignatures.LuaRawSet LuaRawSet;
 
         static LuaModule() {
             var runtimesDirectory = Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
@@ -321,6 +322,11 @@ namespace LuaDotNet.PInvoke {
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
+
+            [UnmanagedFunction("lua_rawset")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaRawSet(IntPtr luaState, int tableIndex);
         }
     }
 }
