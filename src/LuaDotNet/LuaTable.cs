@@ -19,7 +19,7 @@ namespace LuaDotNet {
         }
 
 
-        public IEnumerator<KeyValuePair<object, object>> GetEnumerator() => throw new System.NotImplementedException();
+        public IEnumerator<KeyValuePair<object, object>> GetEnumerator() => _dictionaryCtx.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -67,7 +67,7 @@ namespace LuaDotNet {
             PushToStack(Lua.State);
             objectMarshal.PushToStack(Lua.State, key);
             objectMarshal.PushToStack(Lua.State, null);
-            LuaModule.Instance.LuaRawSet(Lua.State, -2);
+            LuaModule.Instance.LuaRawSet(Lua.State, -3);
 
             _dictionaryCtx.Remove(key);
             return true;
@@ -77,7 +77,28 @@ namespace LuaDotNet {
 
         public object this[object key] {
             get => _dictionaryCtx.TryGetValue(key, out var value) ? value : null;
-            set => throw new System.NotImplementedException();
+            set {
+                if (_dictionaryCtx.ContainsKey(key)) {
+                    if (_dictionaryCtx[key] == value) {
+                        return;
+                    }
+
+                    if (value == null) {
+                        Remove(key);
+                        return;
+                    }
+                    
+                    var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
+                    PushToStack(Lua.State);
+                    objectMarshal.PushToStack(Lua.State, key);
+                    objectMarshal.PushToStack(Lua.State, value);
+                    LuaModule.Instance.LuaSetTable(Lua.State, -3);
+                    _dictionaryCtx[key] = value;
+                }
+                else {
+                    _dictionaryCtx.Add(key, value);
+                }
+            }
         }
 
         public ICollection<object> Keys => _dictionaryCtx.Keys;
