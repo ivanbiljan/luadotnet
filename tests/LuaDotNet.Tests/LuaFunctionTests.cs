@@ -1,26 +1,11 @@
 ﻿using System;
-using LuaDotNet;
+using System.ComponentModel;
 using LuaDotNet.Exceptions;
 using Xunit;
 
 namespace LuaDotNet.Tests {
     public sealed class LuaFunctionFacts {
         private readonly Func<int, int, int> _FactDelegate = (x, y) => x + y;
-
-        [Fact]
-        public void LoadString_SingleResult_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                var function = lua.LoadString("return 5");
-                Assert.Equal(5, function.Call()[0]);
-            }
-        }
-
-        [Fact]
-        public void LoadString_SyntaxError_ThrowsLuaException() {
-            using (var lua = new LuaContext()) {
-                Assert.Throws<LuaException>(() => lua.DoString("Fact = "));
-            }
-        }
 
         [Theory]
         [InlineData(1, 2, 3)]
@@ -44,14 +29,29 @@ namespace LuaDotNet.Tests {
         [Fact]
         public void CreateFunction_NullDelegate_ThrowsArgumentNullException() {
             using (var lua = new LuaContext()) {
-                Assert.Throws<ArgumentNullException>(() => lua.CreateFunction(@delegate: null));
+                Assert.Throws<ArgumentNullException>(() => lua.CreateFunction(null));
             }
         }
-        
+
         [Fact]
         public void CreateFunction_NullMethodInfo_ThrowsArgumentNullException() {
             using (var lua = new LuaContext()) {
                 Assert.Throws<ArgumentNullException>(() => lua.CreateFunction(methodInfo: null));
+            }
+        }
+
+        [Fact]
+        public void LoadString_SingleResult_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                var function = lua.LoadString("return 5");
+                Assert.Equal(5, function.Call()[0]);
+            }
+        }
+
+        [Fact]
+        public void LoadString_SyntaxError_ThrowsLuaException() {
+            using (var lua = new LuaContext()) {
+                Assert.Throws<LuaException>(() => lua.DoString("Fact = "));
             }
         }
     }

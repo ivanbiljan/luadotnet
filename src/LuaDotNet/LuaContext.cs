@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -77,14 +76,6 @@ namespace LuaDotNet {
             return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
         }
 
-        public LuaTable CreateTable(int numberOfSeqElements = 0, int numberOfOtherElements = 0) {
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            LuaModule.Instance.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
-            var table = (LuaTable) objectMarshal.GetObject(State, -1);
-            LuaModule.Instance.LuaPop(State, 1);
-            return table;
-        }
-
         /// <summary>
         ///     Creates and returns a Lua function which once executed runs the method represented by the specified object.
         /// </summary>
@@ -103,7 +94,7 @@ namespace LuaDotNet {
 
             var luaStateParameter = Expression.Parameter(typeof(IntPtr));
             var argumentExpressions = new List<Expression>();
-            
+
             var methodParameters = methodInfo.GetParameters();
             for (var i = 0; i < methodParameters.Length; ++i) {
                 var parameter = methodParameters[i];
@@ -134,8 +125,25 @@ namespace LuaDotNet {
             }
 
             var functionExpression = Expression.Block(functionBody.ToArray());
-            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter).Compile();
+            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter)
+                .Compile();
             return new LuaFunction(this, luaCFunction);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="LuaTable"/> with the specified size.
+        /// </summary>
+        /// <param name="numberOfSeqElements">The number of sequential elements.</param>
+        /// <param name="numberOfOtherElements">The number of other elements.</param>
+        /// <returns>The table.</returns>
+        public LuaTable CreateTable(int numberOfSeqElements = 0, int numberOfOtherElements = 0) {
+            numberOfSeqElements = Math.Max(0, numberOfSeqElements);
+            numberOfOtherElements = Math.Max(0, numberOfOtherElements);
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            LuaModule.Instance.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
+            var table = (LuaTable) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            return table;
         }
 
         /// <summary>
@@ -158,7 +166,7 @@ namespace LuaDotNet {
 
             // Lua pushes an error message in case of errors
             var errorMessage = (string) objectMarshal.GetObject(State, -1);
-            LuaModule.Instance.LuaPop(State, 1); 
+            LuaModule.Instance.LuaPop(State, 1);
             throw new LuaException($"[{errorCode}]: {errorMessage}");
         }
 

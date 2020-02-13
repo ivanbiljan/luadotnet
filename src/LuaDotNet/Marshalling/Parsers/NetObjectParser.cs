@@ -20,7 +20,7 @@ namespace LuaDotNet.Marshalling.Parsers {
                 new NetTypeTypeParser().Push(obj, state);
                 return;
             }
-            
+
             LuaModule.Instance.PushNetObjAsUserdata(state, obj);
             LuaModule.Instance.LuaGetField(state, (int) LuaRegistry.RegistryIndex, Metamethods.NetObjectMetatable);
             LuaModule.Instance.LuaSetMetatable(state, -2);

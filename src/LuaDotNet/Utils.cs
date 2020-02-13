@@ -8,6 +8,22 @@ using LuaDotNet.Extensions;
 
 namespace LuaDotNet {
     internal static class Utils {
+        [UsedImplicitly]
+        public static object CoerceObjectMaybe(object obj, Type type) =>
+            TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
+
+        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
+            resultObj = obj;
+            switch (obj) {
+                case long _ when type.IsInteger():
+                case double _ when type == typeof(float) || type == typeof(decimal):
+                    resultObj = Convert.ChangeType(obj, type);
+                    return true;
+                default:
+                    return type.IsInstanceOfType(obj);
+            }
+        }
+
         // TODO: Work out a better resolution mechanism
         // A shitty implementation based on https://stackoverflow.com/questions/5173339/how-does-the-method-overload-resolution-system-decide-which-method-to-call-when
         public static MethodBase TryResolveMethodCall(IEnumerable<MethodBase> candidates, object[] arguments,
@@ -42,23 +58,6 @@ namespace LuaDotNet {
             }
 
             return possibleOverloads.ElementAtOrDefault(0);
-        }
-
-        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
-            resultObj = obj;
-            switch (obj) {
-                case long _ when type.IsInteger():
-                case double _ when type == typeof(float) || type == typeof(decimal):
-                    resultObj = Convert.ChangeType(obj, type);
-                    return true;
-                default:
-                    return type.IsInstanceOfType(obj);
-            }
-        }
-
-        [UsedImplicitly]
-        public static object CoerceObjectMaybe(object obj, Type type) {
-            return TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
         }
     }
 }

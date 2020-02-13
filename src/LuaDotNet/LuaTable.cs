@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using LuaDotNet.Extensions;
+using JetBrains.Annotations;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet {
     /// <summary>
-    /// Represents a Lua table.
+    ///     Represents a Lua table.
     /// </summary>
+    [PublicAPI]
     public sealed class LuaTable : LuaObject, IDictionary<object, object> {
         private readonly Dictionary<object, object> _dictionaryCtx;
-        
+
         public LuaTable(LuaContext lua, int reference) : base(lua, reference) {
             _dictionaryCtx = new Dictionary<object, object>();
         }
@@ -28,27 +28,27 @@ namespace LuaDotNet {
         }
 
         public void Clear() {
-            var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
             PushToStack(Lua.State);
             LuaModule.Instance.LuaPushNil(Lua.State);
             while (LuaModule.Instance.LuaNext(Lua.State, -2) != 0) {
-                Remove(objectMarshal.GetObject(Lua.State, -2));
-                LuaModule.Instance.LuaPop(Lua.State, 1);
+                LuaModule.Instance.LuaPushValue(Lua.State, -2); // key
+                LuaModule.Instance.LuaPushNil(Lua.State); // value
+                LuaModule.Instance.LuaRawSet(Lua.State, -5); // t[key] = nil
+                LuaModule.Instance.LuaPop(Lua.State, 1); // pop the value, leave the key
             }
-            
+
             _dictionaryCtx.Clear();
         }
 
         public bool Contains(KeyValuePair<object, object> item) => _dictionaryCtx.Contains(item);
 
-        public void CopyTo(KeyValuePair<object, object>[] array, int arrayIndex) {
-            throw new System.NotImplementedException();
-        }
+        public void CopyTo(KeyValuePair<object, object>[] array, int arrayIndex) => throw new NotImplementedException();
 
         public bool Remove(KeyValuePair<object, object> item) => Remove(item.Key);
 
         public int Count => _dictionaryCtx.Count;
         public bool IsReadOnly => false;
+
         public void Add(object key, object value) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
             PushToStack(Lua.State);
@@ -56,7 +56,7 @@ namespace LuaDotNet {
             objectMarshal.PushToStack(Lua.State, value);
             LuaModule.Instance.LuaSetTable(Lua.State, -3);
             //LuaModule.Instance.LuaPop(Lua.State, 1);
-            
+
             _dictionaryCtx.Add(key, value);
         }
 
@@ -87,7 +87,7 @@ namespace LuaDotNet {
                         Remove(key);
                         return;
                     }
-                    
+
                     var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
                     PushToStack(Lua.State);
                     objectMarshal.PushToStack(Lua.State, key);

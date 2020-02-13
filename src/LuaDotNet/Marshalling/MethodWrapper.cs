@@ -20,7 +20,7 @@ namespace LuaDotNet.Marshalling {
                 objectMarshal.PushToStack(state, result);
                 ++numberOfResults;
             }
-            
+
             return numberOfResults;
         }
     }

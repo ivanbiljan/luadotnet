@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Xunit;
+﻿using Xunit;
 
 namespace LuaDotNet.Tests {
     public class LuaTableTests {
@@ -8,22 +7,9 @@ namespace LuaDotNet.Tests {
         [InlineData(0, "Indexed value")]
         public void Add_IsCorrect(object key, object value) {
             using (var lua = new LuaContext()) {
-                var table = lua.CreateTable(0, 0);
+                var table = lua.CreateTable();
                 table.Add(key, value);
                 Assert.Equal(value, table[key]);
-            }
-        }
-
-        [Fact]
-        public void Count_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                var table = lua.CreateTable();
-                
-                table.Add("testkey", "value");
-                Assert.Single(table);
-
-                table.Remove("testkey");
-                Assert.Empty(table);
             }
         }
 
@@ -39,9 +25,32 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
+        public void ContainsKey_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                var table = lua.CreateTable();
+                table.Add("testkey", "value");
+                Assert.True(table.ContainsKey("testkey"));
+                Assert.False(table.ContainsKey("this key does not exist"));
+            }
+        }
+
+        [Fact]
+        public void Count_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                var table = lua.CreateTable();
+
+                table.Add("testkey", "value");
+                Assert.Single(table);
+
+                table.Remove("testkey");
+                Assert.Empty(table);
+            }
+        }
+
+        [Fact]
         public void Remove_IsCorrect() {
             using (var lua = new LuaContext()) {
-                var table = lua.CreateTable(0, 0);
+                var table = lua.CreateTable();
                 table.Add("testkey", 1);
                 table.Add("testkey2", 2);
                 table.Remove("testkey");
@@ -49,14 +58,24 @@ namespace LuaDotNet.Tests {
                 Assert.Null(table["testkey"]);
             }
         }
-
+        
         [Fact]
-        public void ContainsKey_IsCorrect() {
+        public void GetSet_NullValue_RemovesKey() {
             using (var lua = new LuaContext()) {
                 var table = lua.CreateTable();
                 table.Add("testkey", "value");
-                Assert.True(table.ContainsKey("testkey"));
-                Assert.False(table.ContainsKey("this key does not exist"));
+                table["testkey"] = null;
+                Assert.Empty(table);
+            }
+        }
+
+        [Fact]
+        public void GetSet_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                var table = lua.CreateTable();
+                table["key"] = 1;
+                Assert.Single(table);
+                Assert.Equal(1, table["key"]);
             }
         }
     }

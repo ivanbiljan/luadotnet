@@ -1,14 +1,31 @@
 using System;
-using JetBrains.Annotations;
-using LuaDotNet;
 using Xunit;
 
 namespace LuaDotNet.Tests {
     public class LuaContextFacts {
+        [Theory]
+        [InlineData("str", "Hello, World")]
+        [InlineData("bool", true)]
+        [InlineData("integer", -123456L)]
+        [InlineData("float", 123.456)]
+        [InlineData("array", new long[] {1, 2, 3})]
+        public void GetSetGlobal_IsCorrect(string global, object value) {
+            var lua = new LuaContext();
+            lua.SetGlobal(global, value);
+            Assert.Equal(value, lua.GetGlobal(global));
+        }
+
         [Fact]
         public void Constructor_IsCorrect() {
             var lua = new LuaContext();
             Assert.NotEqual(IntPtr.Zero, lua.State);
+        }
+
+        [Fact]
+        public void DoString_NullChunk_ThrowsArgumentNullException() {
+            using (var lua = new LuaContext()) {
+                Assert.Throws<ArgumentNullException>(() => lua.DoString(null));
+            }
         }
 
         [Fact]
@@ -27,16 +44,16 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void LoadString_NullChunk_ThrowsArgumentNullException() {
+        public void GetGlobal_NullName_ThrowsArgumentNullException() {
             using (var lua = new LuaContext()) {
-                Assert.Throws<ArgumentNullException>(() => lua.LoadString(null));
+                Assert.Throws<ArgumentNullException>(() => lua.GetGlobal(null));
             }
         }
 
         [Fact]
-        public void GetGlobal_NullName_ThrowsArgumentNullException() {
+        public void LoadString_NullChunk_ThrowsArgumentNullException() {
             using (var lua = new LuaContext()) {
-                Assert.Throws<ArgumentNullException>(() => lua.GetGlobal(null));
+                Assert.Throws<ArgumentNullException>(() => lua.LoadString(null));
             }
         }
 
@@ -45,25 +62,6 @@ namespace LuaDotNet.Tests {
             using (var lua = new LuaContext()) {
                 Assert.Throws<ArgumentNullException>(() => lua.SetGlobal(null, null));
             }
-        }
-
-        [Fact]
-        public void DoString_NullChunk_ThrowsArgumentNullException() {
-            using (var lua = new LuaContext()) {
-                Assert.Throws<ArgumentNullException>(() => lua.DoString(null));
-            }
-        }
-
-        [Theory]
-        [InlineData("str", "Hello, World")]
-        [InlineData("bool", true)]
-        [InlineData("integer", -123456L)]
-        [InlineData("float", 123.456)]
-        [InlineData("array", new long[] {1, 2, 3})]
-        public void GetSetGlobal_IsCorrect(string global, object value) {
-            var lua = new LuaContext();
-            lua.SetGlobal(global, value);
-            Assert.Equal(value, lua.GetGlobal(global));
         }
     }
 }

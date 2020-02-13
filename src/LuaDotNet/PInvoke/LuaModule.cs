@@ -13,8 +13,8 @@ using LuaInteger = System.Int64; // Just to avoid improper marshalling
 namespace LuaDotNet.PInvoke {
     internal sealed class LuaModule : NativeLibrary {
         public const int LuaMultRet = -1;
-        public const int LuaRefNil = -1;
         public const int LuaNoRef = -2;
+        public const int LuaRefNil = -1;
 
         public FunctionSignatures.LuaCheckStack LuaCheckStack;
         public FunctionSignatures.LuaClose LuaClose;
@@ -41,6 +41,7 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaPushNumber LuaPushNumber;
         public FunctionSignatures.LuaPushValue LuaPushValue;
         public FunctionSignatures.LuaRawGetI LuaRawGetI;
+        public FunctionSignatures.LuaRawSet LuaRawSet;
         public FunctionSignatures.LuaRawSetI LuaRawSetI;
         public FunctionSignatures.LuaResume LuaResume;
         public FunctionSignatures.LuaSetGlobal LuaSetGlobal;
@@ -57,7 +58,6 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaToUserdata LuaToUserdata;
         public FunctionSignatures.LuaTypeD LuaType;
         public FunctionSignatures.LuaXMove LuaXMove;
-        public FunctionSignatures.LuaRawSet LuaRawSet;
 
         static LuaModule() {
             var runtimesDirectory = Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
@@ -242,6 +242,11 @@ namespace LuaDotNet.PInvoke {
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate int LuaRawGetI(IntPtr luaState, int tableIndex, LuaInteger elementIndex);
 
+            [UnmanagedFunction("lua_rawset")]
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+            public delegate void LuaRawSet(IntPtr luaState, int tableIndex);
+
             [UnmanagedFunction("lua_rawseti")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -322,11 +327,6 @@ namespace LuaDotNet.PInvoke {
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
-
-            [UnmanagedFunction("lua_rawset")]
-            [SuppressUnmanagedCodeSecurity]
-            [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate void LuaRawSet(IntPtr luaState, int tableIndex);
         }
     }
 }

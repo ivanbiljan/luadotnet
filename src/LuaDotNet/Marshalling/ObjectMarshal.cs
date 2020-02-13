@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using JetBrains.Annotations;
-using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
-using LuaDotNet.PInvoke;
 using LuaDotNet.Marshalling.Parsers;
+using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling {
     internal sealed class ObjectMarshal {
         private readonly NetObjectParser _defaultNetObjectParser = new NetObjectParser();
         private readonly LuaContext _lua;
+
         private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>> {
             [typeof(string)] = () => new StringParser(),
             [typeof(sbyte)] = () => new NumberParser(),
@@ -84,16 +82,15 @@ namespace LuaDotNet.Marshalling {
         }
 
         public void PushToStack(IntPtr state, object obj) {
-            if (obj == null) {
-                LuaModule.Instance.LuaPushNil(state);
-                return;
+            switch (obj) {
+                case null:
+                    LuaModule.Instance.LuaPushNil(state);
+                    return;
+                case LuaObject luaObject:
+                    luaObject.PushToStack(state);
+                    return;
             }
 
-            if (obj is LuaObject luaObject) {
-                luaObject.PushToStack(state);
-                return;
-            }
-            
             var objType = obj.GetType();
             var parser = _typeParsers.GetValueOrDefault(objType);
             if (parser == null) {
