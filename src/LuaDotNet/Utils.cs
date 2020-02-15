@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
@@ -19,45 +20,84 @@ namespace LuaDotNet {
                 case double _ when type == typeof(float) || type == typeof(decimal):
                     resultObj = Convert.ChangeType(obj, type);
                     return true;
+                case LuaTable luaTable when type.IsArray:
+                    var arrayType = type.GetElementType();
+                    var array = Array.CreateInstance(arrayType, luaTable.Count);
+                    for (var i = 0; i < array.Length; ++i) {
+                        if (!TryImplicitConversion(luaTable.Values.ElementAt(i), arrayType, out var temp)) {
+                            return false;
+                        }
+
+                        array.SetValue(temp, i);
+                    }
+
+                    resultObj = array;
+                    return true;
                 default:
                     return type.IsInstanceOfType(obj);
             }
         }
 
-        // TODO: Work out a better resolution mechanism
-        // A shitty implementation based on https://stackoverflow.com/questions/5173339/how-does-the-method-overload-resolution-system-decide-which-method-to-call-when
-        public static MethodBase TryResolveMethodCall(IEnumerable<MethodBase> candidates, object[] arguments,
-            out object[] convertedArguments) {
-            convertedArguments = new object[arguments.Length];
-
-            var possibleOverloads = new List<MethodBase>();
+        // TODO construct an overload resolution mechanism based on the specification from --> Done
+        // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
+        public static MethodBase ResolveMethod(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
+            convertedArguments = new object[0];
+            MethodBase method = null;
             foreach (var candidate in candidates) {
                 var parameters = candidate.GetParameters();
-                if (parameters.Length != arguments.Length) {
-                    continue;
+                convertedArguments = new object[parameters.Length];
+                if (candidate.IsGenericMethodDefinition) {
+                    var genericParameters = candidate.GetGenericArguments();
+                    for (var i = 0; i < genericParameters.Length; ++i) {
+                        var genericParameterType = genericParameters[i];
+                        if (arguments[i].GetType() != genericParameterType) {
+                            continue;
+                        }
+                    }
                 }
 
-                var satisfies = true;
+                Debug.WriteLine(candidate.Name);
+                Debug.WriteLine(parameters.Length);
+                Debug.WriteLine(arguments.Length);
+                if (parameters.Length == 0 && arguments.Length == 0) {
+                    return candidate;
+                }
+
+                if (parameters.Length < arguments.Length) {
+                    if (parameters.Length != 0 && parameters[parameters.Length - 1].IsParamsArray()) {
+                        continue;
+                    }
+                }
+
+                var convertedArgumentCount = 0;
                 for (var i = 0; i < parameters.Length; ++i) {
                     var parameter = parameters[i];
-                    if (!TryImplicitConversion(arguments[i], parameter.ParameterType, out var argument)) {
-                        satisfies = false;
+                    var argument = arguments.ElementAtOrDefault(i);
+                    if (argument == null) {
+                        if (!parameter.IsOptional) {
+                            break;
+                        }
+                        
+                        convertedArguments[i] = parameter.DefaultValue;
+                        continue;
+                    }
+                    
+                    if (!TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
                         break;
                     }
 
-                    convertedArguments[i] = argument;
+                    convertedArguments[i] = obj;
+                    ++convertedArgumentCount;
                 }
 
-                if (satisfies) {
-                    possibleOverloads.Add(candidate);
+                // If the number of converted arguments does not match the number of parameters that either means
+                // that at least one argument in the argument list is not applicable or there are not enough arguments provided
+                if (convertedArgumentCount == arguments.Length) {
+                    return candidate;
                 }
             }
-
-            if (possibleOverloads.Count > 1) {
-                throw new LuaException("Ambiguous method call");
-            }
-
-            return possibleOverloads.ElementAtOrDefault(0);
+            
+            return null;
         }
     }
 }

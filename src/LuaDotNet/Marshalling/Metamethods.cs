@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -55,7 +56,7 @@ namespace LuaDotNet.Marshalling {
 
             var typeMetadata = type.GetOrCreateMetadata();
             var arguments = objectMarshal.GetObjects(state, 2, LuaModule.Instance.LuaGetTop(state));
-            var constructor = TryResolveMethodCall(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
+            var constructor = ResolveMethod(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
             if (constructor == null) {
                 throw new LuaException($"No candidates for {type.Name}({string.Join(", ", arguments.Select(a => a.GetType().Name))})");
             }
@@ -66,7 +67,7 @@ namespace LuaDotNet.Marshalling {
         }
 
         private static int Gc(IntPtr state) {
-            GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(state, -1))).Free();
+            GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(state, 1))).Free();
             return 0;
         }
 
@@ -77,51 +78,56 @@ namespace LuaDotNet.Marshalling {
                 throw new LuaException("Attempt to index a null type reference.");
             }
 
-            var memberName = objectMarshal.GetObject(state, 2) as string;
-            if (memberName == null) {
+            if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
                 throw new LuaException("Expected a proper member name.");
             }
 
-            var members = type.GetOrCreateMetadata().GetMembers(memberName).ToArray();
-            if (members.Length > 1) {
-                throw new LuaException("Ambiguous member name.");
+            return GetMember(state, type, memberName, true);
+        }
+
+        private static int GetMember(IntPtr state, object obj, string memberName, bool isStaticSearch) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var objType = obj is Type type ? type : obj.GetType();
+            var typeMetadata = objType.GetOrCreateMetadata();
+            var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
+            if (members.Length == 0) {
+                throw new LuaException($"Invalid member '{memberName}'");
             }
 
-            var member = members.ElementAtOrDefault(0);
-            if (member == null) {
-                throw new LuaException("Invalid member name.");
-            }
-
+            obj = isStaticSearch ? null : obj;
+            var member = members[0];
             switch (member.MemberType) {
                 case MemberTypes.Event: // TODO
                     break;
                 case MemberTypes.Field:
                     try {
                         var field = (FieldInfo) member;
-                        objectMarshal.PushToStack(state, field.GetValue(null));
+                        objectMarshal.PushToStack(state, field.GetValue(obj));
+                        return 1;
                     }
                     catch (TargetInvocationException ex) {
                         throw new LuaException($"An exception has occured while indexing a type's field: {ex}");
                     }
-
-                    break;
                 case MemberTypes.Method:
                     try {
-                        var method = (MethodInfo) member;
-                        var wrapper = new MethodWrapper(method);
+                        var wrapper = new MethodWrapper(memberName, objType, obj);
                         LuaModule.Instance.LuaPushCClosure(state, wrapper.Callback, 0);
+                        return 1;
                     }
                     catch (TargetInvocationException ex) {
                         throw new LuaException($"An exception has occured while indexing a type's method: {ex}");
                     }
-
-                    break;
                 case MemberTypes.NestedType:
+                    // TODO
                     break;
                 case MemberTypes.Property:
                     var property = (PropertyInfo) member;
                     try {
-                        objectMarshal.PushToStack(state, property.GetValue(null, null));
+                        objectMarshal.PushToStack(state, property.GetValue(obj, null));
+                        return 1;
+                    }
+                    catch (ArgumentException) {
+                        // TODO recurse back to base classes
                     }
                     catch (TargetInvocationException ex) {
                         throw new LuaException($"An exception has occured while indexing a type's property: {ex}");
@@ -130,7 +136,7 @@ namespace LuaDotNet.Marshalling {
                     break;
             }
 
-            return 1;
+            return 0;
         }
 
         private static int ToString(IntPtr state) {
