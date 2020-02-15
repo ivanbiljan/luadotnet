@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using LuaDotNet.Marshalling;
@@ -12,10 +13,16 @@ namespace LuaDotNet {
     /// </summary>
     [PublicAPI]
     public sealed class LuaTable : LuaObject, IDictionary<object, object> {
-        private readonly Dictionary<object, object> _dictionaryCtx;
+        private readonly Dictionary<object, object> _dictionaryCtx = new Dictionary<object, object>();
 
         public LuaTable(LuaContext lua, int reference) : base(lua, reference) {
-            _dictionaryCtx = new Dictionary<object, object>();
+            var objectMarshal = ObjectMarshalPool.GetMarshal(lua.State);
+            PushToStack(Lua.State);
+            LuaModule.Instance.LuaPushNil(Lua.State);
+            while (LuaModule.Instance.LuaNext(Lua.State, -2) != 0) {
+                _dictionaryCtx.Add(objectMarshal.GetObject(lua.State, -2), objectMarshal.GetObject(lua.State, -1));
+                LuaModule.Instance.LuaPop(Lua.State, 1); // pop the value, leave the key
+            }
         }
 
 

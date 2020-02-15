@@ -23,14 +23,14 @@ namespace LuaDotNet {
                 case LuaTable luaTable when type.IsArray:
                     var arrayType = type.GetElementType();
                     var array = Array.CreateInstance(arrayType, luaTable.Count);
-                    for (var i = 0; i < array.Length; ++i) {
-                        if (!TryImplicitConversion(luaTable.Values.ElementAt(i), arrayType, out var temp)) {
+                    for (long i = 0; i < array.Length; ++i) {
+                        if (!TryImplicitConversion(luaTable[i + 1], arrayType, out var temp)) {
                             return false;
                         }
 
                         array.SetValue(temp, i);
                     }
-
+                    
                     resultObj = array;
                     return true;
                 default:
@@ -61,7 +61,7 @@ namespace LuaDotNet {
                 }
 
                 if (parameters.Length < arguments.Length) {
-                    if (parameters.Length != 0 && parameters[parameters.Length - 1].IsParamsArray()) {
+                    if (parameters.Length != 0 && !parameters[parameters.Length - 1].IsParamsArray()) {
                         continue;
                     }
                 }
@@ -77,6 +77,10 @@ namespace LuaDotNet {
                         
                         convertedArguments[i] = parameter.DefaultValue;
                         continue;
+                    }
+
+                    if (parameter.IsParamsArray()) {
+                        
                     }
                     
                     if (!TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {

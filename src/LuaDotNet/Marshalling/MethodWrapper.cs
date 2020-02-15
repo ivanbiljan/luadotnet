@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using LuaDotNet.Exceptions;
@@ -46,9 +47,10 @@ namespace LuaDotNet.Marshalling {
             var isStatic = _target == null;
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var args = objectMarshal.GetObjects(state, isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
+            Debug.WriteLine(string.Join(", ", args));
             var method = Utils.ResolveMethod(_methods, args, out args) as MethodInfo;
             if (method == null) {
-                throw new LuaException($"Cannot resolve method call: {_methodName}({string.Join(", ", args)})");
+                throw new LuaException($"Cannot resolve method call: {_methodName}");
             }
 
             if (method.IsGenericMethodDefinition) {

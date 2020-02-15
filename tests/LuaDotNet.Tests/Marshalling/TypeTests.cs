@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.ExceptionServices;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
@@ -33,6 +34,18 @@ namespace LuaDotNet.Tests.Marshalling {
 
             public static int OverloadedMethod(int firstArg, int secondArg) {
                 return firstArg + secondArg;
+            }
+
+            public static int OverloadedMethod(params int[] @params) {
+                return @params.Sum() + 1;
+            }
+        }
+        
+        [Fact]
+        public void CallOverload_ParamsArray_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("TestClass", typeof(TestClass));
+                Assert.Equal(26L, lua.DoString("return TestClass.OverloadedMethod({5,5,5,5,5})")[0]);
             }
         }
         
