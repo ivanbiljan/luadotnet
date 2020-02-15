@@ -55,10 +55,7 @@ namespace LuaDotNet {
                         }
                     }
                 }
-
-                Debug.WriteLine(candidate.Name);
-                Debug.WriteLine(parameters.Length);
-                Debug.WriteLine(arguments.Length);
+                
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
                 }
