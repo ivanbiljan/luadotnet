@@ -45,19 +45,17 @@ namespace LuaDotNet {
             MethodBase method = null;
             foreach (var candidate in candidates) {
                 var parameters = candidate.GetParameters();
+                if (parameters.Length == 0 && arguments.Length == 0) {
+                    return candidate;
+                }
+                
                 convertedArguments = new object[parameters.Length];
                 if (candidate.IsGenericMethodDefinition) {
                     var genericParameters = candidate.GetGenericArguments();
-                    for (var i = 0; i < genericParameters.Length; ++i) {
-                        var genericParameterType = genericParameters[i];
-                        if (arguments[i].GetType() != genericParameterType) {
-                            continue;
-                        }
+                    var skip = genericParameters.Where((genericParameterType, i) => arguments[i].GetType() != genericParameterType).Any();
+                    if (skip) {
+                        continue;
                     }
-                }
-                
-                if (parameters.Length == 0 && arguments.Length == 0) {
-                    return candidate;
                 }
 
                 if (parameters.Length < arguments.Length) {
@@ -80,7 +78,11 @@ namespace LuaDotNet {
                     }
 
                     if (parameter.IsParamsArray()) {
-                        
+                        /* TODO implement this properly in the future
+                           The current system relies on Lua tables when it comes to parsing array,
+                           meaning that a MethodA(params object[] args) method has to be invoked like so: MethodA({1, 2, 3, ...})
+                           Such mechanism defeats the purpose of a params type[] parameter
+                         */
                     }
                     
                     if (!TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
@@ -91,7 +93,7 @@ namespace LuaDotNet {
                     ++convertedArgumentCount;
                 }
 
-                // If the number of converted arguments does not match the number of parameters that either means
+                // If the number of converted arguments does not match the number of arguments passed to the method call that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
                 if (convertedArgumentCount == arguments.Length) {
                     return candidate;

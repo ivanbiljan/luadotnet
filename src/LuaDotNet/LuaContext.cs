@@ -119,7 +119,10 @@ namespace LuaDotNet {
             else {
                 // TODO push ref/out parameters as well?
                 // In case of a non-void method we have to push the result of the method call to Lua's stack
-                functionBody.Add(Expression.Call(Expression.Constant(objectMarshal), objectMarshalPushObjectMethod, luaStateParameter,
+                functionBody.Add(Expression.Call(
+                    Expression.Constant(objectMarshal), 
+                    objectMarshalPushObjectMethod, 
+                    luaStateParameter,
                     Expression.Convert(methodCallExpression, typeof(object))));
                 functionBody.Add(Expression.Constant(1));
             }
@@ -232,6 +235,21 @@ namespace LuaDotNet {
 
             ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
+        }
+        
+        public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target) {
+            if (path == null) {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            if (method == null) {
+                throw new ArgumentNullException(nameof(method));
+            }
+
+            var oldTop = LuaModule.Instance.LuaGetTop(State);
+            var function = CreateFunction(method);
+            SetGlobal(path, function);
+            LuaModule.Instance.LuaSetTop(State, oldTop);
         }
 
         internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaModule.LuaMultRet) {

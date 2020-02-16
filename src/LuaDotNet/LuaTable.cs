@@ -61,7 +61,7 @@ namespace LuaDotNet {
             PushToStack(Lua.State);
             objectMarshal.PushToStack(Lua.State, key);
             objectMarshal.PushToStack(Lua.State, value);
-            LuaModule.Instance.LuaSetTable(Lua.State, -3);
+            LuaModule.Instance.LuaRawSet(Lua.State, -3);
             //LuaModule.Instance.LuaPop(Lua.State, 1);
 
             _dictionaryCtx.Add(key, value);
