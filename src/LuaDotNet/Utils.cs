@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
-using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 
 namespace LuaDotNet {
@@ -13,42 +11,21 @@ namespace LuaDotNet {
         public static object CoerceObjectMaybe(object obj, Type type) =>
             TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
 
-        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
-            resultObj = obj;
-            switch (obj) {
-                case long _ when type.IsInteger():
-                case double _ when type == typeof(float) || type == typeof(decimal):
-                    resultObj = Convert.ChangeType(obj, type);
-                    return true;
-                case LuaTable luaTable when type.IsArray:
-                    var arrayType = type.GetElementType();
-                    var array = Array.CreateInstance(arrayType, luaTable.Count);
-                    for (long i = 0; i < array.Length; ++i) {
-                        if (!TryImplicitConversion(luaTable[i + 1], arrayType, out var temp)) {
-                            return false;
-                        }
-
-                        array.SetValue(temp, i);
-                    }
-                    
-                    resultObj = array;
-                    return true;
-                default:
-                    return type.IsInstanceOfType(obj);
-            }
-        }
-
         // TODO construct an overload resolution mechanism based on the specification from --> Done
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
-        public static MethodBase ResolveMethod(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
+        public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
             convertedArguments = new object[0];
             MethodBase method = null;
             foreach (var candidate in candidates) {
+                if (candidate == null) {
+                    continue;
+                }
+
                 var parameters = candidate.GetParameters();
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
                 }
-                
+
                 convertedArguments = new object[parameters.Length];
                 if (candidate.IsGenericMethodDefinition) {
                     var genericParameters = candidate.GetGenericArguments();
@@ -72,7 +49,7 @@ namespace LuaDotNet {
                         if (!parameter.IsOptional) {
                             break;
                         }
-                        
+
                         convertedArguments[i] = parameter.DefaultValue;
                         continue;
                     }
@@ -84,7 +61,7 @@ namespace LuaDotNet {
                            Such mechanism defeats the purpose of a params type[] parameter
                          */
                     }
-                    
+
                     if (!TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
                         break;
                     }
@@ -99,8 +76,33 @@ namespace LuaDotNet {
                     return candidate;
                 }
             }
-            
+
             return null;
+        }
+
+        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
+            resultObj = obj;
+            switch (obj) {
+                case long _ when type.IsInteger():
+                case double _ when type == typeof(float) || type == typeof(decimal):
+                    resultObj = Convert.ChangeType(obj, type);
+                    return true;
+                case LuaTable luaTable when type.IsArray:
+                    var arrayType = type.GetElementType();
+                    var array = Array.CreateInstance(arrayType, luaTable.Count);
+                    for (long i = 0; i < array.Length; ++i) {
+                        if (!TryImplicitConversion(luaTable[i + 1], arrayType, out var temp)) {
+                            return false;
+                        }
+
+                        array.SetValue(temp, i);
+                    }
+
+                    resultObj = array;
+                    return true;
+                default:
+                    return type.IsInstanceOfType(obj);
+            }
         }
     }
 }

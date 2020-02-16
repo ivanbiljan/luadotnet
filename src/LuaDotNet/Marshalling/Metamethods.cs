@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -30,7 +29,11 @@ namespace LuaDotNet.Marshalling {
                 ["__gc"] = Gc,
                 ["__tostring"] = ToString,
                 ["__index"] = GetObjectMember,
-                ["__newindex"] = SetObjectMember
+                ["__newindex"] = SetObjectMember,
+                ["__add"] = AddObjects,
+                ["__sub"] = SubtractObjects,
+                ["__mul"] = MultiplyObjects,
+                ["__div"] = DivideObjects
             };
 
 
@@ -52,6 +55,8 @@ namespace LuaDotNet.Marshalling {
             }
         }
 
+        private static int AddObjects(IntPtr state) => HandleArithmeticMetamethod(state, "op_Addition");
+
         private static int CallType(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var type = LuaModule.Instance.UserdataToNetObject(state, 1) as Type;
@@ -61,7 +66,7 @@ namespace LuaDotNet.Marshalling {
 
             var typeMetadata = type.GetOrCreateMetadata();
             var arguments = objectMarshal.GetObjects(state, 2, LuaModule.Instance.LuaGetTop(state));
-            var constructor = ResolveMethod(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
+            var constructor = PickOverload(typeMetadata.Constructors, arguments, out var convertedArguments) as ConstructorInfo;
             if (constructor == null) {
                 throw new LuaException($"No candidates for {type.Name}({string.Join(", ", arguments.Select(a => a.GetType().Name))})");
             }
@@ -71,37 +76,11 @@ namespace LuaDotNet.Marshalling {
             return 1;
         }
 
+        private static int DivideObjects(IntPtr state) => HandleArithmeticMetamethod(state, "op_Division");
+
         private static int Gc(IntPtr state) {
             GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.Instance.LuaToUserdata(state, 1))).Free();
             return 0;
-        }
-
-        private static int GetTypeMember(IntPtr state) {
-            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var type = objectMarshal.GetObject(state, 1) as Type;
-            if (type == null) {
-                throw new LuaException("Attempt to index a null type reference.");
-            }
-
-            if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
-                throw new LuaException("Expected a proper member name.");
-            }
-
-            return GetMember(state, type, memberName, true);
-        }
-
-        private static int GetObjectMember(IntPtr state) {
-            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var obj = objectMarshal.GetObject(state, 1);
-            if (obj == null) {
-                throw new LuaException("Attempt to index a null object reference.");
-            }
-
-            if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
-                throw new LuaException("Expected a proper member name.");
-            }
-
-            return GetMember(state, obj, memberName, false);
         }
 
         private static int GetMember(IntPtr state, object obj, string memberName, bool isStaticSearch) {
@@ -158,18 +137,110 @@ namespace LuaDotNet.Marshalling {
             return 0;
         }
 
-        private static int SetTypeMember(IntPtr state) {
+        private static int GetObjectMember(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var type = objectMarshal.GetObject(state, 1);
-            if (type == null) {
-                throw new LuaException("Attempt to call __newindex on a null object reference.");
+            var obj = objectMarshal.GetObject(state, 1);
+            if (obj == null) {
+                throw new LuaException("Attempt to index a null object reference.");
             }
 
             if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
                 throw new LuaException("Expected a proper member name.");
             }
 
-            return SetMember(state, type, memberName, true);
+            return GetMember(state, obj, memberName, false);
+        }
+
+        private static int GetTypeMember(IntPtr state) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var type = objectMarshal.GetObject(state, 1) as Type;
+            if (type == null) {
+                throw new LuaException("Attempt to index a null type reference.");
+            }
+
+            if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
+                throw new LuaException("Expected a proper member name.");
+            }
+
+            return GetMember(state, type, memberName, true);
+        }
+
+        private static int HandleArithmeticMetamethod(IntPtr state, string opMethodName) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var firstOperand = objectMarshal.GetObject(state, 1);
+            var secondOperand = objectMarshal.GetObject(state, 2);
+            if (firstOperand == null && secondOperand == null) {
+                throw new LuaException("Cannot perform arithmetic operations on nil objects.");
+            }
+
+            var arguments = new[] {firstOperand, secondOperand};
+            var method = PickOverload(new[] {
+                firstOperand?.GetType().GetOrCreateMetadata().GetMethods(opMethodName).ElementAtOrDefault(0),
+                secondOperand?.GetType().GetOrCreateMetadata().GetMethods(opMethodName).ElementAtOrDefault(0)
+            }, arguments, out _);
+
+            if (method == null) {
+                throw new LuaException(
+                    $"Attempt to perform an arithmetic operation on operands that do not overload the '{opMethodName}' operator.");
+            }
+
+            object result;
+            try {
+                result = method.Invoke(null, arguments);
+            }
+            catch (TargetInvocationException ex) {
+                throw new LuaException($"An exception has occured while executing an operator method: {ex}");
+            }
+
+            objectMarshal.PushToStack(state, result);
+            return 1;
+        }
+
+        private static int MultiplyObjects(IntPtr state) => HandleArithmeticMetamethod(state, "op_Multiply");
+
+        private static int SetMember(IntPtr state, object obj, string memberName, bool isStaticSearch) {
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var objType = obj is Type type ? type : obj.GetType();
+            var typeMetadata = objType.GetOrCreateMetadata();
+            var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
+            if (members.Length == 0) {
+                throw new LuaException($"Invalid member '{memberName}'");
+            }
+
+            obj = isStaticSearch ? null : obj;
+            var member = members[0];
+            switch (member.MemberType) {
+                case MemberTypes.Field:
+                    try {
+                        var field = (FieldInfo) member;
+                        var value = objectMarshal.GetObject(state, 3);
+                        field.SetValue(obj, value);
+                    }
+                    catch (Exception ex) {
+                        throw new LuaException($"An exception has occured while modifying a field: {ex}");
+                    }
+
+                    break;
+                case MemberTypes.Property:
+                    try {
+                        var property = (PropertyInfo) member;
+                        if (property.GetIndexParameters().Length > 0) {
+                            throw new LuaException("Attempt to modify the value of an indexer.");
+                        }
+
+                        var value = objectMarshal.GetObject(state, 3);
+                        property.SetValue(obj, value, null);
+                    }
+                    catch (Exception ex) {
+                        throw new LuaException($"An exception has occured while modifying a field: {ex}");
+                    }
+
+                    break;
+                default:
+                    throw new LuaException("Member is not a .NET field or property.");
+            }
+
+            return 0;
         }
 
         private static int SetObjectMember(IntPtr state) {
@@ -186,48 +257,21 @@ namespace LuaDotNet.Marshalling {
             return SetMember(state, obj, memberName, false);
         }
 
-        private static int SetMember(IntPtr state, object obj, string memberName, bool isStaticSearch) {
+        private static int SetTypeMember(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var objType = obj is Type type ? type : obj.GetType();
-            var typeMetadata = objType.GetOrCreateMetadata();
-            var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
-            if (members.Length == 0) {
-                throw new LuaException($"Invalid member '{memberName}'");
-            }
-            
-            obj = isStaticSearch ? null : obj;
-            var member = members[0];
-            switch (member.MemberType) {
-                case MemberTypes.Field:
-                    try {
-                        var field = (FieldInfo) member;
-                        var value = objectMarshal.GetObject(state, 3);
-                        field.SetValue(obj, value);
-                    }
-                    catch (Exception ex) {
-                        throw new LuaException($"An exception has occured while modifying a field: {ex}");
-                    }
-                    break;
-                case MemberTypes.Property:
-                    try {
-                        var property = (PropertyInfo) member;
-                        if (property.GetIndexParameters().Length > 0) {
-                            throw new LuaException("Attempt to modify the value of an indexer.");
-                        }
-                        
-                        var value = objectMarshal.GetObject(state, 3);
-                        property.SetValue(obj, value, null);
-                    }
-                    catch (Exception ex) {
-                        throw new LuaException($"An exception has occured while modifying a field: {ex}");
-                    }
-                    break;
-                default:
-                    throw new LuaException($"Member is not a .NET field or property.");
+            var type = objectMarshal.GetObject(state, 1);
+            if (type == null) {
+                throw new LuaException("Attempt to call __newindex on a null object reference.");
             }
 
-            return 0;
+            if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
+                throw new LuaException("Expected a proper member name.");
+            }
+
+            return SetMember(state, type, memberName, true);
         }
+
+        private static int SubtractObjects(IntPtr state) => HandleArithmeticMetamethod(state, "op_Subtraction");
 
         private static int ToString(IntPtr state) {
             var obj = LuaModule.Instance.UserdataToNetObject(state, 1);

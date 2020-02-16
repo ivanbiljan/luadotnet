@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
@@ -8,7 +7,7 @@ using LuaDotNet.Attributes;
 
 namespace LuaDotNet.Extensions {
     /// <summary>
-    /// Provides type metadata.
+    ///     Provides type metadata.
     /// </summary>
     [PublicAPI]
     public sealed class TypeMetadata {
@@ -84,7 +83,7 @@ namespace LuaDotNet.Extensions {
                 if (method.GetCustomAttribute<LuaHideAttribute>() != null) {
                     continue;
                 }
-                
+
                 // Disregard methods that wouldn't be of much use to the Lua runtime
                 if (method.Name != "GetType" &&
                     method.Name != "GetHashCode" && method.Name != "Equals" &&

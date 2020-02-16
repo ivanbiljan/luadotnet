@@ -18,37 +18,12 @@ namespace LuaDotNet.Marshalling {
             _target = target;
         }
 
-        private int GenericMethodCallback(IntPtr state, MethodInfo method, object[] args) {
-            var genericParameters = method.GetGenericMethodDefinition().GetParameters();
-            if (genericParameters.Length > args.Length) {
-                throw new LuaException("Invalid generic method syntax.");
-            }
-
-            var typeArgs = new Type[genericParameters.Length];
-            for (var i = 0; i < genericParameters.Length; ++i) {
-                var parameter = genericParameters[i];
-                if (!(args[i] is Type argType)) {
-                    throw new LuaException("Expected a type parameter.");
-                }
-
-                if (parameter.ParameterType.IsSubclassOf(argType)) {
-                    throw new LuaException("Invalid type argument.");
-                }
-
-                typeArgs[i] = argType;
-            }
-            
-            method = method.MakeGenericMethod(typeArgs);
-            args = args.Skip(genericParameters.Length).ToArray();
-            return InvokeAndPushResults(state, method, args);
-        }
-
         public int Callback(IntPtr state) {
             var isStatic = _target == null;
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var args = objectMarshal.GetObjects(state, isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
             Debug.WriteLine(string.Join(", ", args));
-            var method = Utils.ResolveMethod(_methods, args, out args) as MethodInfo;
+            var method = Utils.PickOverload(_methods, args, out args) as MethodInfo;
             if (method == null) {
                 throw new LuaException($"Cannot resolve method call: {_methodName}");
             }
@@ -87,6 +62,31 @@ namespace LuaDotNet.Marshalling {
 //            return numberOfResults;
         }
 
+        private int GenericMethodCallback(IntPtr state, MethodInfo method, object[] args) {
+            var genericParameters = method.GetGenericMethodDefinition().GetParameters();
+            if (genericParameters.Length > args.Length) {
+                throw new LuaException("Invalid generic method syntax.");
+            }
+
+            var typeArgs = new Type[genericParameters.Length];
+            for (var i = 0; i < genericParameters.Length; ++i) {
+                var parameter = genericParameters[i];
+                if (!(args[i] is Type argType)) {
+                    throw new LuaException("Expected a type parameter.");
+                }
+
+                if (parameter.ParameterType.IsSubclassOf(argType)) {
+                    throw new LuaException("Invalid type argument.");
+                }
+
+                typeArgs[i] = argType;
+            }
+
+            method = method.MakeGenericMethod(typeArgs);
+            args = args.Skip(genericParameters.Length).ToArray();
+            return InvokeAndPushResults(state, method, args);
+        }
+
         private int InvokeAndPushResults(IntPtr state, MethodInfo method, params object[] args) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             object result;
@@ -104,7 +104,7 @@ namespace LuaDotNet.Marshalling {
                 if (!parameter.IsOut && !parameter.IsRetval) {
                     continue;
                 }
-                
+
                 objectMarshal.PushToStack(state, args[parameter.Position]);
                 ++numberOfResults;
             }

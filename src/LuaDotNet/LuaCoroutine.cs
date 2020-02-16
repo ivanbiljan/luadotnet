@@ -111,7 +111,7 @@ namespace LuaDotNet {
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield) {
                 // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
-                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State); 
+                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State);
                 if (!LuaModule.Instance.LuaCheckStack(Lua.State, numberOfResults + 1)) {
                     LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
                     throw new LuaException("The stack does not have enough space to fit that many results.");
@@ -173,7 +173,7 @@ namespace LuaDotNet {
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield) {
                 // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
-                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State); 
+                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State);
                 if (!LuaModule.Instance.LuaCheckStack(Lua.State, numberOfResults + 1)) {
                     LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
                     throw new LuaException("The stack does not have enough space to fit that many results.");

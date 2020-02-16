@@ -48,17 +48,15 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void Remove_IsCorrect() {
+        public void GetSet_IsCorrect() {
             using (var lua = new LuaContext()) {
                 var table = lua.CreateTable();
-                table.Add("testkey", 1);
-                table.Add("testkey2", 2);
-                table.Remove("testkey");
-                Assert.Equal(2, table["testkey2"]);
-                Assert.Null(table["testkey"]);
+                table["key"] = 1;
+                Assert.Single(table);
+                Assert.Equal(1, table["key"]);
             }
         }
-        
+
         [Fact]
         public void GetSet_NullValue_RemovesKey() {
             using (var lua = new LuaContext()) {
@@ -70,12 +68,14 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void GetSet_IsCorrect() {
+        public void Remove_IsCorrect() {
             using (var lua = new LuaContext()) {
                 var table = lua.CreateTable();
-                table["key"] = 1;
-                Assert.Single(table);
-                Assert.Equal(1, table["key"]);
+                table.Add("testkey", 1);
+                table.Add("testkey2", 2);
+                table.Remove("testkey");
+                Assert.Equal(2, table["testkey2"]);
+                Assert.Null(table["testkey"]);
             }
         }
     }

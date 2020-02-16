@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Runtime.ExceptionServices;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using Xunit;
@@ -18,59 +17,17 @@ namespace LuaDotNet.Tests.Marshalling {
             public static string StaticProperty { get; } = nameof(StaticProperty);
             public string TestProperty { get; } = "Hello, World";
 
+            public static bool OverloadedMethod(bool firstArg) => firstArg;
+
+            public static string OverloadedMethod(string firstArg) => firstArg;
+
+            public static int OverloadedMethod(int firstArg) => firstArg;
+
+            public static int OverloadedMethod(int firstArg, int secondArg) => firstArg + secondArg;
+
+            public static int OverloadedMethod(params int[] @params) => @params.Sum() + 1;
+
             public static string StaticMethod(string what = null) => what.IsNullOrWhitespace() ? nameof(StaticMethod) : what;
-
-            public static bool OverloadedMethod(bool firstArg) {
-                return firstArg;
-            }
-
-            public static string OverloadedMethod(string firstArg) {
-                return firstArg;
-            }
-
-            public static int OverloadedMethod(int firstArg) {
-                return firstArg;
-            }
-
-            public static int OverloadedMethod(int firstArg, int secondArg) {
-                return firstArg + secondArg;
-            }
-
-            public static int OverloadedMethod(params int[] @params) {
-                return @params.Sum() + 1;
-            }
-        }
-        
-        [Fact]
-        public void CallOverload_ParamsArray_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Equal(26L, lua.DoString("return TestClass.OverloadedMethod({5,5,5,5,5})")[0]);
-            }
-        }
-        
-        [Fact]
-        public void CallOverload_SingleArgIsInteger_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Equal(5L, lua.DoString("return TestClass.OverloadedMethod(5)")[0]);
-            }
-        }
-        
-        [Fact]
-        public void CallOverload_SingleArgIsBoolean_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Equal(true, lua.DoString("return TestClass.OverloadedMethod(true)")[0]);
-            }
-        }
-        
-        [Fact]
-        public void CallOverload_TwoArgs_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Equal(10L, lua.DoString("return TestClass.OverloadedMethod(5, 5)")[0]);
-            }
         }
 
         [Theory]
@@ -93,6 +50,38 @@ namespace LuaDotNet.Tests.Marshalling {
                 var instance = lua.GetGlobal("instance") as TestClass;
                 Assert.NotNull(instance);
                 Assert.Equal(argument, instance.TestProperty);
+            }
+        }
+
+        [Fact]
+        public void CallOverload_ParamsArray_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("TestClass", typeof(TestClass));
+                Assert.Equal(26L, lua.DoString("return TestClass.OverloadedMethod({5,5,5,5,5})")[0]);
+            }
+        }
+
+        [Fact]
+        public void CallOverload_SingleArgIsBoolean_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("TestClass", typeof(TestClass));
+                Assert.Equal(true, lua.DoString("return TestClass.OverloadedMethod(true)")[0]);
+            }
+        }
+
+        [Fact]
+        public void CallOverload_SingleArgIsInteger_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("TestClass", typeof(TestClass));
+                Assert.Equal(5L, lua.DoString("return TestClass.OverloadedMethod(5)")[0]);
+            }
+        }
+
+        [Fact]
+        public void CallOverload_TwoArgs_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("TestClass", typeof(TestClass));
+                Assert.Equal(10L, lua.DoString("return TestClass.OverloadedMethod(5, 5)")[0]);
             }
         }
 

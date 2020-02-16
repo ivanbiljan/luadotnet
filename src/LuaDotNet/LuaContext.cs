@@ -120,8 +120,8 @@ namespace LuaDotNet {
                 // TODO push ref/out parameters as well?
                 // In case of a non-void method we have to push the result of the method call to Lua's stack
                 functionBody.Add(Expression.Call(
-                    Expression.Constant(objectMarshal), 
-                    objectMarshalPushObjectMethod, 
+                    Expression.Constant(objectMarshal),
+                    objectMarshalPushObjectMethod,
                     luaStateParameter,
                     Expression.Convert(methodCallExpression, typeof(object))));
                 functionBody.Add(Expression.Constant(1));
@@ -134,7 +134,7 @@ namespace LuaDotNet {
         }
 
         /// <summary>
-        /// Creates a new <see cref="LuaTable"/> with the specified size.
+        ///     Creates a new <see cref="LuaTable" /> with the specified size.
         /// </summary>
         /// <param name="numberOfSeqElements">The number of sequential elements.</param>
         /// <param name="numberOfOtherElements">The number of other elements.</param>
@@ -214,6 +214,21 @@ namespace LuaDotNet {
             return function;
         }
 
+        public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target) {
+            if (path == null) {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            if (method == null) {
+                throw new ArgumentNullException(nameof(method));
+            }
+
+            var oldTop = LuaModule.Instance.LuaGetTop(State);
+            var function = CreateFunction(method);
+            SetGlobal(path, function);
+            LuaModule.Instance.LuaSetTop(State, oldTop);
+        }
+
         /// <summary>
         ///     Registers a type parser for the specified type. This action will override any existing parsers.
         /// </summary>
@@ -235,21 +250,6 @@ namespace LuaDotNet {
 
             ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
-        }
-        
-        public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target) {
-            if (path == null) {
-                throw new ArgumentNullException(nameof(path));
-            }
-
-            if (method == null) {
-                throw new ArgumentNullException(nameof(method));
-            }
-
-            var oldTop = LuaModule.Instance.LuaGetTop(State);
-            var function = CreateFunction(method);
-            SetGlobal(path, function);
-            LuaModule.Instance.LuaSetTop(State, oldTop);
         }
 
         internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaModule.LuaMultRet) {
