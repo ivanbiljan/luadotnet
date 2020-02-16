@@ -7,7 +7,7 @@ using LuaDotNet.Attributes;
 
 namespace LuaDotNet.Extensions {
     /// <summary>
-    ///     Provides type metadata.
+    ///     Provides type metadata. Acts as a wrapper around a <see cref="Type"/> object and filters out unnecessary members.
     /// </summary>
     [PublicAPI]
     public sealed class TypeMetadata {
@@ -95,9 +95,9 @@ namespace LuaDotNet.Extensions {
                 }
             }
 
-            var eventInfos = type.GetEvents(bindingFlags).ToList();
-            var fieldInfos = type.GetFields(bindingFlags).ToList();
-            var propertyInfos = type.GetProperties(bindingFlags).ToList();
+            var eventInfos = type.GetEvents(bindingFlags).Where(e => e.GetCustomAttribute<LuaHideAttribute>() == null).ToList();
+            var fieldInfos = type.GetFields(bindingFlags).Where(f => f.GetCustomAttribute<LuaHideAttribute>() == null).ToList();
+            var propertyInfos = type.GetProperties(bindingFlags).Where(p => p.GetCustomAttribute<LuaHideAttribute>() == null).ToList();
 
             return new TypeMetadata {
                 _constructors = constructorInfos,
