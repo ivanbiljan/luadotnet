@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     public abstract class TypeParserBase : ITypeParser {
         protected LuaContext LuaContext;
 

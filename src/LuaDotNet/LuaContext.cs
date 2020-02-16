@@ -7,6 +7,7 @@ using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling;
+using LuaDotNet.Marshalling.Parsers;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet {
@@ -214,6 +215,13 @@ namespace LuaDotNet {
             return function;
         }
 
+        /// <summary>
+        /// Registers a specified method as a global variable at the given path.
+        /// </summary>
+        /// <param name="path">The path, which must not be <c>null</c>.</param>
+        /// <param name="method">The method, which must not be <c>null</c>.</param>
+        /// <param name="target">The instance on which to invoke the method.</param>
+        /// <exception cref="ArgumentNullException"><paramref name="path"/> or <paramref name="method"/> is <c>null</c>.</exception>
         public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target) {
             if (path == null) {
                 throw new ArgumentNullException(nameof(path));

@@ -2,7 +2,7 @@
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     public sealed class NumberParser : ITypeParser {
         public object Parse(IntPtr state, int stackIndex) {
             if (LuaModule.Instance.LuaIsInteger(state, stackIndex)) {

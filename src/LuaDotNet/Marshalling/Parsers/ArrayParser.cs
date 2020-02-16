@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     public sealed class ArrayParser : ITypeParser {
         public object Parse(IntPtr state, int stackIndex) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);

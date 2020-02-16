@@ -1,7 +1,7 @@
 ﻿using System;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     public sealed class NetTypeTypeParser : ITypeParser {
         public object Parse(IntPtr state, int stackIndex) => LuaModule.Instance.UserdataToNetObject(state, stackIndex);
 

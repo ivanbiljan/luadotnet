@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     /// <summary>
     ///     Describes a type parser.
     /// </summary>

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling {
+namespace LuaDotNet.Marshalling.Parsers {
     public sealed class StringParser : ITypeParser {
         public object Parse(IntPtr state, int stackIndex) {
             var stringPointer = LuaModule.Instance.LuaToLString(state, stackIndex, out var lengthPtr);
