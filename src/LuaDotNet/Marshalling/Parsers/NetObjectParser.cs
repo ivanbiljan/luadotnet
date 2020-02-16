@@ -15,9 +15,9 @@ namespace LuaDotNet.Marshalling.Parsers {
             return null;
         }
 
-        public void Push(object obj, IntPtr state) {
+        public void Push(IntPtr state, object obj) {
             if (obj is Type) {
-                new NetTypeTypeParser().Push(obj, state);
+                new NetTypeTypeParser().Push(state, obj);
                 return;
             }
 

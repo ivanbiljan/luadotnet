@@ -9,7 +9,7 @@ namespace LuaDotNet.Marshalling.Parsers {
         ///     Parses an object at the specified index in the stack of the specified Lua state.
         /// </summary>
         /// <param name="state">The Lua state.</param>
-        /// <param name="luaContext">The Lua stack index.</param>
+        /// <param name="stackIndex">The Lua stack index.</param>
         /// <returns>The parsed value.</returns>
         object Parse(IntPtr state, int stackIndex);
 
@@ -17,6 +17,7 @@ namespace LuaDotNet.Marshalling.Parsers {
         ///     Pushes an object to the specified Lua state.
         /// </summary>
         /// <param name="state">The Lua state.</param>
-        void Push(object obj, IntPtr state);
+        /// <param name="obj">The object</param>
+        void Push(IntPtr state, object obj);
     }
 }

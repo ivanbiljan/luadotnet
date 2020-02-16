@@ -20,7 +20,7 @@ namespace LuaDotNet.Marshalling.Parsers {
             return objects.ToArray();
         }
 
-        public void Push(object obj, IntPtr state) {
+        public void Push(IntPtr state, object obj) {
             var array = (Array) obj;
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             LuaModule.Instance.LuaCreateTable(state, array.Length, 0);

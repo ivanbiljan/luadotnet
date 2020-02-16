@@ -12,7 +12,7 @@ namespace LuaDotNet.Marshalling.Parsers {
             return LuaModule.Instance.LuaToNumberX(state, stackIndex, out _);
         }
 
-        public void Push(object obj, IntPtr state) {
+        public void Push(IntPtr state, object obj) {
             if (obj.GetType().IsInteger()) {
                 LuaModule.Instance.LuaPushInteger(state, (long) Convert.ChangeType(obj, typeof(long)));
                 return;

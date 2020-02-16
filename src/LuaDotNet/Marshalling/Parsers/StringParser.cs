@@ -12,6 +12,6 @@ namespace LuaDotNet.Marshalling.Parsers {
             return Encoding.UTF8.GetString(stringBuffer);
         }
 
-        public void Push(object obj, IntPtr state) => LuaModule.Instance.LuaPushLString(state, (string) obj);
+        public void Push(IntPtr state, object obj) => LuaModule.Instance.LuaPushLString(state, (string) obj);
     }
 }

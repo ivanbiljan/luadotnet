@@ -5,7 +5,7 @@ namespace LuaDotNet.Marshalling.Parsers {
     public sealed class BooleanParser : ITypeParser {
         public object Parse(IntPtr state, int stackIndex) => LuaModule.Instance.LuaToBoolean(state, stackIndex);
 
-        public void Push(object obj, IntPtr state) {
+        public void Push(IntPtr state, object obj) {
             LuaModule.Instance.LuaPushBoolean(state, (bool) obj);
         }
     }

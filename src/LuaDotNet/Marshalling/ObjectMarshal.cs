@@ -94,10 +94,10 @@ namespace LuaDotNet.Marshalling {
             var objType = obj.GetType();
             var parser = _typeParsers.GetValueOrDefault(objType);
             if (parser == null) {
-                _defaultNetObjectParser.Push(obj, state);
+                _defaultNetObjectParser.Push(state, obj);
             }
             else {
-                parser().Push(obj, state);
+                parser().Push(state, obj);
             }
         }
 

@@ -9,6 +9,6 @@ namespace LuaDotNet.Marshalling.Parsers {
         }
 
         public abstract object Parse(IntPtr state, int stackIndex);
-        public abstract void Push(object obj, IntPtr state);
+        public abstract void Push(IntPtr state, object obj);
     }
 }
