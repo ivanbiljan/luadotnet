@@ -34,7 +34,7 @@ namespace LuaDotNet {
         /// <returns>The invocation's results.</returns>
         public object[] Call(params object[] arguments) {
             ObjectMarshalPool.GetMarshal(Lua.State).PushToStack(Lua.State, this);
-            return Lua.CallWithArguments(arguments);
+            return LuaModule.Instance.PCallKInternal(Lua.State, arguments);
         }
     }
 }

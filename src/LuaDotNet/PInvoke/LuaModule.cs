@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
+using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
+using LuaDotNet.Marshalling;
 using NLdr;
 using NLdr.Framework;
 using LuaInteger = System.Int64; // Just to avoid improper marshalling
@@ -105,6 +108,33 @@ namespace LuaDotNet.PInvoke {
         public object UserdataToNetObject(IntPtr state, int stackIndex) {
             var userdataPointer = LuaToUserdata(state, stackIndex);
             return GCHandle.FromIntPtr(Marshal.ReadIntPtr(userdataPointer)).Target;
+        }
+        
+        internal object[] PCallKInternal(IntPtr state, IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaModule.LuaMultRet) {
+            // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
+            var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+            var stackTop = LuaGetTop(state) - 1;
+
+            // The function is already on the stack so the only thing left to do is push the arguments in direct order
+            if (arguments != null) {
+                foreach (var argument in arguments) {
+                    objectMarshal.PushToStack(state, argument);
+                }
+            }
+
+            // Adjust the number of results to avoid errors
+            numberOfResults = Math.Max(numberOfResults, -1);
+            LuaErrorCode errorCode;
+            if ((errorCode = LuaPCallK(state, arguments?.Count ?? 0, numberOfResults)) != LuaErrorCode.LuaOk) {
+                // Lua pushes an error message in case of errors
+                var errorMessage = (string) objectMarshal.GetObject(state, -1);
+                LuaPop(state, 1);
+                throw new LuaException($"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
+            }
+
+            var results = objectMarshal.GetObjects(state, stackTop + 1, LuaModule.Instance.LuaGetTop(state));
+            LuaSetTop(state, stackTop);
+            return results;
         }
 
         [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]

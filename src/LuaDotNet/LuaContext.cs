@@ -165,7 +165,7 @@ namespace LuaDotNet {
             LuaErrorCode errorCode;
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) == LuaErrorCode.LuaOk) {
-                return CallWithArguments(numberOfResults: numberOfResults);
+                return LuaModule.Instance.PCallKInternal(State, numberOfResults: numberOfResults);
             }
 
             // Lua pushes an error message in case of errors
@@ -258,33 +258,6 @@ namespace LuaDotNet {
 
             ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
             LuaModule.Instance.LuaSetGlobal(State, name);
-        }
-
-        internal object[] CallWithArguments(IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaModule.LuaMultRet) {
-            // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            var stackTop = LuaModule.Instance.LuaGetTop(State) - 1;
-
-            // The function is already on the stack so the only thing left to do is push the arguments in direct order
-            if (arguments != null) {
-                foreach (var argument in arguments) {
-                    objectMarshal.PushToStack(State, argument);
-                }
-            }
-
-            // Adjust the number of results to avoid errors
-            numberOfResults = Math.Max(numberOfResults, -1);
-            LuaErrorCode errorCode;
-            if ((errorCode = LuaModule.Instance.LuaPCallK(State, arguments?.Count ?? 0, numberOfResults)) != LuaErrorCode.LuaOk) {
-                // Lua pushes an error message in case of errors
-                var errorMessage = (string) objectMarshal.GetObject(State, -1);
-                LuaModule.Instance.LuaPop(State, 1);
-                throw new LuaException($"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
-            }
-
-            var results = objectMarshal.GetObjects(State, stackTop + 1, LuaModule.Instance.LuaGetTop(State));
-            LuaModule.Instance.LuaSetTop(State, stackTop);
-            return results;
         }
 
         private void ReleaseUnmanagedResources() {
