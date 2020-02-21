@@ -101,7 +101,7 @@ namespace LuaDotNet.Marshalling {
             var parameters = method.GetParameters();
             for (var i = 0; i < parameters.Length; ++i) {
                 var parameter = parameters[i];
-                if (!parameter.IsOut) {
+                if (!parameter.IsOut && !parameter.ParameterType.IsByRef) {
                     continue;
                 }
 
