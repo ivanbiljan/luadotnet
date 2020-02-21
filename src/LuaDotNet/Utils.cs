@@ -20,7 +20,7 @@ namespace LuaDotNet {
                 if (candidate == null) {
                     continue;
                 }
-
+                
                 var parameters = candidate.GetParameters();
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
@@ -44,6 +44,10 @@ namespace LuaDotNet {
                 var convertedArgumentCount = 0;
                 for (var i = 0; i < parameters.Length; ++i) {
                     var parameter = parameters[i];
+                    if (parameter.IsOut) {
+                        continue;
+                    }
+                    
                     var argument = arguments.ElementAtOrDefault(i);
                     if (argument == null) {
                         if (!parameter.IsOptional) {
