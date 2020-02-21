@@ -50,6 +50,7 @@ namespace LuaDotNet.Marshalling {
             PushMetamethod("__gc", ObjectMetamethods["__gc"]);
             PushMetamethod("__tostring", ObjectMetamethods["__tostring"]);
             PushMetamethod("__index", ObjectMetamethods["__index"]);
+            PushMetamethod("__newindex", ObjectMetamethods["__newindex"]);
             PushMetamethod("__add", ObjectMetamethods["__add"]);
             PushMetamethod("__sub", ObjectMetamethods["__sub"]);
             PushMetamethod("__mul", ObjectMetamethods["__mul"]);

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
+using LuaDotNet.Attributes;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling;
@@ -19,10 +21,34 @@ namespace LuaDotNet {
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
         /// </summary>
-        public LuaContext() {
+        public LuaContext(bool openLibs = true) {
             State = LuaModule.Instance.LuaLNewState();
-            ObjectMarshalPool.AddMarshal(this, new ObjectMarshal(this));
+            if (openLibs) {
+                LuaModule.Instance.LuaLOpenLibs(State);
+            }
+            
+            var objectMarshal = new ObjectMarshal(this);
+            ObjectMarshalPool.AddMarshal(this, objectMarshal);
             Metamethods.CreateMetatables(State);
+            
+            SetGlobal("importType", (LuaModule.FunctionSignatures.LuaCFunction) (state => {
+                var typeName = (string) objectMarshal.GetObject(state, -1);
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                    foreach (var type in assembly.GetExportedTypes()) {
+                        if (type.Name != typeName && type.FullName != typeName) {
+                            continue;
+                        }
+
+                        if (type.GetCustomAttribute<LuaHideAttribute>() != null) {
+                            continue;
+                        }
+                        
+                        SetGlobal(type.Name, type);
+                    }
+                }
+
+                return 0;
+            }));
         }
 
         /// <summary>
