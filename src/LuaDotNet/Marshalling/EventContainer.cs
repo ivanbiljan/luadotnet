@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace LuaDotNet.Marshalling {
+﻿namespace LuaDotNet.Marshalling {
     internal sealed class EventContainer {
     }
 }

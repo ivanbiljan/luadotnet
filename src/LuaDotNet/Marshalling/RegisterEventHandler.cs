@@ -8,7 +8,7 @@ namespace LuaDotNet.Marshalling {
     internal sealed class RegisterEventHandler {
         // ReSharper disable once CollectionNeverQueried.Local
         private static readonly Dictionary<LuaFunction, Delegate> EventHandlers = new Dictionary<LuaFunction, Delegate>();
-        
+
         private readonly EventInfo _event;
         private readonly object _target;
 

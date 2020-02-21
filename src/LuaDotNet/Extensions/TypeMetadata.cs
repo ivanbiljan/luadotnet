@@ -7,7 +7,7 @@ using LuaDotNet.Attributes;
 
 namespace LuaDotNet.Extensions {
     /// <summary>
-    ///     Provides type metadata. Acts as a wrapper around a <see cref="Type"/> object and filters out unnecessary members.
+    ///     Provides type metadata. Acts as a wrapper around a <see cref="Type" /> object and filters out unnecessary members.
     /// </summary>
     [PublicAPI]
     public sealed class TypeMetadata {

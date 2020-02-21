@@ -1,6 +1,5 @@
 ﻿using System;
 using JetBrains.Annotations;
-using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling {
     internal sealed class LuaEventHandler<TEventArgs> where TEventArgs : EventArgs {

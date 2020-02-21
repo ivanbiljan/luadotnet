@@ -40,12 +40,20 @@ namespace LuaDotNet.Marshalling {
         public static void CreateMetatables(IntPtr state) {
             LuaModule.Instance.LuaLNewMetatable(state, NetTypeMetatable);
             PushMetamethod("__gc", TypeMetamethods["__gc"]);
+            PushMetamethod("__tostring", TypeMetamethods["__tostring"]);
             PushMetamethod("__call", TypeMetamethods["__call"]);
             PushMetamethod("__index", TypeMetamethods["__index"]);
+            PushMetamethod("__newindex", TypeMetamethods["__newindex"]);
             LuaModule.Instance.LuaPop(state, 1);
 
             LuaModule.Instance.LuaLNewMetatable(state, NetObjectMetatable);
             PushMetamethod("__gc", ObjectMetamethods["__gc"]);
+            PushMetamethod("__tostring", ObjectMetamethods["__tostring"]);
+            PushMetamethod("__index", ObjectMetamethods["__index"]);
+            PushMetamethod("__add", ObjectMetamethods["__add"]);
+            PushMetamethod("__sub", ObjectMetamethods["__sub"]);
+            PushMetamethod("__mul", ObjectMetamethods["__mul"]);
+            PushMetamethod("__div", ObjectMetamethods["__div"]);
             LuaModule.Instance.LuaPop(state, 1);
 
             void PushMetamethod(string metamethod, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) {
