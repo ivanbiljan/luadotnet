@@ -86,6 +86,9 @@ namespace LuaDotNet.Marshalling {
                 case null:
                     LuaModule.Instance.LuaPushNil(state);
                     return;
+                case LuaModule.FunctionSignatures.LuaCFunction luaCFunction:
+                    LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
+                    return;
                 case LuaObject luaObject:
                     luaObject.PushToStack(state);
                     return;

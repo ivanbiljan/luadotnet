@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -18,6 +19,8 @@ namespace LuaDotNet {
     /// </summary>
     [PublicAPI]
     public sealed class LuaContext : IDisposable {
+        private readonly ObjectMarshal _objectMarshal;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
         /// </summary>
@@ -26,29 +29,31 @@ namespace LuaDotNet {
             if (openLibs) {
                 LuaModule.Instance.LuaLOpenLibs(State);
             }
-            
-            var objectMarshal = new ObjectMarshal(this);
-            ObjectMarshalPool.AddMarshal(this, objectMarshal);
-            Metamethods.CreateMetatables(State);
-            
-            SetGlobal("importType", (LuaModule.FunctionSignatures.LuaCFunction) (state => {
-                var typeName = (string) objectMarshal.GetObject(state, -1);
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-                    foreach (var type in assembly.GetExportedTypes()) {
-                        if (type.Name != typeName && type.FullName != typeName) {
-                            continue;
-                        }
 
-                        if (type.GetCustomAttribute<LuaHideAttribute>() != null) {
-                            continue;
-                        }
-                        
-                        SetGlobal(type.Name, type);
-                    }
+            ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
+            Metamethods.CreateMetatables(State);
+
+            RegisterFunction("importType", typeof(LuaContext).GetMethod("importType"), this);
+            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly"), this);
+
+            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetExportedTypes());
+            foreach (var type in exportedTypes) {
+                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
+                if (globalAttribute != null) {
+                    ImportType(State);
+                    continue;
                 }
 
-                return 0;
-            }));
+                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
+                    if (globalAttribute == null) {
+                        continue;
+                    }
+
+                    var name = globalAttribute.NameOverride ?? method.Name;
+                    SetGlobal(name, CreateFunction(method));
+                }
+            }
         }
 
         /// <summary>
@@ -289,6 +294,30 @@ namespace LuaDotNet {
         private void ReleaseUnmanagedResources() {
             // TODO release unmanaged resources here
             LuaModule.Instance.LuaClose(State);
+        }
+
+        private int ImportType(IntPtr state) {
+            var typeName = (string) _objectMarshal.GetObject(state, -1);
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                foreach (var type in assembly.GetExportedTypes()) {
+                    if (type.Name != typeName && type.FullName != typeName) {
+                        continue;
+                    }
+
+                    if (type.GetCustomAttribute<LuaHideAttribute>() != null) {
+                        continue;
+                    }
+                        
+                    SetGlobal(type.Name, type);
+                }
+            }
+
+            return 0;
+        }
+
+        private int LoadAssembly(IntPtr state) {
+            
+            return 0;
         }
     }
 }
