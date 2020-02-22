@@ -307,7 +307,7 @@ namespace LuaDotNet {
                     if (type.GetCustomAttribute<LuaHideAttribute>() != null) {
                         continue;
                     }
-                        
+
                     SetGlobal(type.Name, type);
                 }
             }
@@ -316,7 +316,20 @@ namespace LuaDotNet {
         }
 
         private int LoadAssembly(IntPtr state) {
-            
+            var assemblyFile = (string) _objectMarshal.GetObject(state, -1);
+            Assembly assembly = null;
+
+            try {
+                assembly = Assembly.LoadFrom(assemblyFile);
+            }
+            catch (FileNotFoundException) {
+                // Swallow the exception and attempt to resolve the assembly using the AssemblyName
+            }
+
+            if (assembly == null) {
+                Assembly.Load(AssemblyName.GetAssemblyName(assemblyFile));
+            }
+
             return 0;
         }
     }
