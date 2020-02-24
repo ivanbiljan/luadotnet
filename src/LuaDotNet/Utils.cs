@@ -43,7 +43,6 @@ namespace LuaDotNet {
                 }
 
                 var explicitFactor = CheckParameters(parameters, out var args);
-                Debug.WriteLine("Factor: " + explicitFactor);
                 if (explicitFactor > bestExplicitScore) {
                     bestExplicitScore = explicitFactor;
                     convertedArguments = args;
@@ -59,6 +58,7 @@ namespace LuaDotNet {
                 for (var i = 0; i < parameters.Count; ++i) {
                     var parameter = parameters.ElementAt(i);
                     if (parameter.IsOut) {
+                        ++implicitParameterCount;
                         continue;
                     }
                     

@@ -97,6 +97,11 @@ namespace LuaDotNet.Marshalling {
             }
 
             var numberOfResults = 0;
+            if (method.ReturnType != typeof(void)) {
+                objectMarshal.PushToStack(state, result);
+                ++numberOfResults;
+            }
+            
             var parameters = method.GetParameters();
             for (var i = 0; i < parameters.Length; ++i) {
                 var parameter = parameters[i];
@@ -105,11 +110,6 @@ namespace LuaDotNet.Marshalling {
                 }
 
                 objectMarshal.PushToStack(state, args[parameter.Position]);
-                ++numberOfResults;
-            }
-
-            if (method.ReturnType != typeof(void)) {
-                objectMarshal.PushToStack(state, result);
                 ++numberOfResults;
             }
 

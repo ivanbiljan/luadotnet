@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Linq;
 using LuaDotNet.Exceptions;
 using Xunit;
@@ -31,6 +32,18 @@ namespace LuaDotNet.Tests.Marshalling {
 
             public int Method2(params int[] @params) => @params.Sum() + 1;
             #endregion
+        }
+
+        [Fact]
+        public void Method3_OutParameter_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal(nameof(Int32), typeof(int));
+                
+                var results = lua.DoString("return Int32.TryParse('5')");
+                
+                Assert.Equal(5L, results[0]);
+                Assert.Equal(true, results[1]);
+            }
         }
 
         [Fact]
