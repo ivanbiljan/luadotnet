@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
@@ -15,6 +16,7 @@ namespace LuaDotNet {
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
         public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
             convertedArguments = new object[0];
+            var bestExplicitScore = 0D;
             MethodBase method = null;
             foreach (var candidate in candidates) {
                 if (candidate == null) {
@@ -25,8 +27,7 @@ namespace LuaDotNet {
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
                 }
-
-                convertedArguments = new object[parameters.Length];
+                
                 if (candidate.IsGenericMethodDefinition) {
                     var genericParameters = candidate.GetGenericArguments();
                     var skip = genericParameters.Where((genericParameterType, i) => arguments[i].GetType() != genericParameterType).Any();
@@ -41,9 +42,20 @@ namespace LuaDotNet {
                     }
                 }
 
+                var explicitFactor = CheckParameters(parameters, out var args);
+                if (explicitFactor > bestExplicitScore) {
+                    bestExplicitScore = explicitFactor;
+                    convertedArguments = args;
+                    method = candidate;
+                }
+            }
+
+            double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args) {
+                args = new object[parameters.Count];
                 var convertedArgumentCount = 0;
-                for (var i = 0; i < parameters.Length; ++i) {
-                    var parameter = parameters[i];
+                var explicitArgumentCount = 0;
+                for (var i = 0; i < parameters.Count; ++i) {
+                    var parameter = parameters.ElementAt(i);
                     if (parameter.IsOut) {
                         continue;
                     }
@@ -54,7 +66,7 @@ namespace LuaDotNet {
                             break;
                         }
 
-                        convertedArguments[i] = parameter.DefaultValue;
+                        args[i] = parameter.DefaultValue;
                         continue;
                     }
 
@@ -70,18 +82,22 @@ namespace LuaDotNet {
                         break;
                     }
 
-                    convertedArguments[i] = obj;
+                    args[i] = obj;
                     ++convertedArgumentCount;
+                    ++explicitArgumentCount;
                 }
 
+                
                 // If the number of converted arguments does not match the number of arguments passed to the method call that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
-                if (convertedArgumentCount == arguments.Length) {
-                    return candidate;
+                if (convertedArgumentCount != arguments.Length) {
+                    return -1;
                 }
-            }
 
-            return null;
+                return (double) explicitArgumentCount / parameters.Count;
+            }
+            
+            return method;
         }
 
         public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {

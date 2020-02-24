@@ -33,27 +33,27 @@ namespace LuaDotNet {
             ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
             Metamethods.CreateMetatables(State);
 
-            RegisterFunction("importType", typeof(LuaContext).GetMethod("importType"), this);
-            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly"), this);
+            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.NonPublic | BindingFlags.Instance), this);
+            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance), this);
 
-            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetExportedTypes());
-            foreach (var type in exportedTypes) {
-                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
-                if (globalAttribute != null) {
-                    ImportType(State);
-                    continue;
-                }
-
-                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
-                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
-                    if (globalAttribute == null) {
-                        continue;
-                    }
-
-                    var name = globalAttribute.NameOverride ?? method.Name;
-                    SetGlobal(name, CreateFunction(method));
-                }
-            }
+//            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetExportedTypes());
+//            foreach (var type in exportedTypes) {
+//                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
+//                if (globalAttribute != null) {
+//                    ImportType(State);
+//                    continue;
+//                }
+//
+//                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+//                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
+//                    if (globalAttribute == null) {
+//                        continue;
+//                    }
+//
+//                    var name = globalAttribute.NameOverride ?? method.Name;
+//                    SetGlobal(name, CreateFunction(method));
+//                }
+//            }
         }
 
         /// <summary>
@@ -142,7 +142,8 @@ namespace LuaDotNet {
                 argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
             }
 
-            var methodCallExpression = Expression.Call(Expression.Constant(target), methodInfo, argumentExpressions);
+            var methodCallExpression = Expression.Call(Expression.Convert(Expression.Constant(target), methodInfo.DeclaringType),
+                methodInfo, argumentExpressions);
             var functionBody = new List<Expression>();
             if (methodInfo.ReturnType == typeof(void)) {
                 functionBody.Add(methodCallExpression);

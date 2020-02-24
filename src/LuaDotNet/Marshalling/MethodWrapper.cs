@@ -22,7 +22,6 @@ namespace LuaDotNet.Marshalling {
             var isStatic = _target == null;
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var args = objectMarshal.GetObjects(state, isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
-            Debug.WriteLine(string.Join(", ", args));
             var method = Utils.PickOverload(_methods, args, out args) as MethodInfo;
             if (method == null) {
                 throw new LuaException($"Cannot resolve method call: {_methodName}");

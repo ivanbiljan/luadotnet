@@ -125,8 +125,8 @@ namespace LuaDotNet.PInvoke {
 
             // Adjust the number of results to avoid errors
             numberOfResults = Math.Max(numberOfResults, -1);
-            LuaErrorCode errorCode;
-            if ((errorCode = LuaPCallK(state, arguments?.Count ?? 0, numberOfResults)) != LuaErrorCode.LuaOk) {
+            var errorCode = LuaPCallK(state, arguments?.Count ?? 0, numberOfResults);
+            if (errorCode != LuaErrorCode.LuaOk) {
                 // Lua pushes an error message in case of errors
                 var errorMessage = (string) objectMarshal.GetObject(state, -1);
                 LuaPop(state, 1);
