@@ -16,7 +16,7 @@ namespace LuaDotNet {
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
         public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
             convertedArguments = new object[0];
-            var bestExplicitScore = 0D;
+            var bestExplicitScore = -1D;
             MethodBase method = null;
             foreach (var candidate in candidates) {
                 if (candidate == null) {
@@ -43,6 +43,7 @@ namespace LuaDotNet {
                 }
 
                 var explicitFactor = CheckParameters(parameters, out var args);
+                Debug.WriteLine("Factor: " + explicitFactor);
                 if (explicitFactor > bestExplicitScore) {
                     bestExplicitScore = explicitFactor;
                     convertedArguments = args;
@@ -54,6 +55,7 @@ namespace LuaDotNet {
                 args = new object[parameters.Count];
                 var convertedArgumentCount = 0;
                 var explicitArgumentCount = 0;
+                var implicitParameterCount = 0;
                 for (var i = 0; i < parameters.Count; ++i) {
                     var parameter = parameters.ElementAt(i);
                     if (parameter.IsOut) {
@@ -67,6 +69,7 @@ namespace LuaDotNet {
                         }
 
                         args[i] = parameter.DefaultValue;
+                        ++implicitParameterCount;
                         continue;
                     }
 
@@ -90,8 +93,8 @@ namespace LuaDotNet {
                 
                 // If the number of converted arguments does not match the number of arguments passed to the method call that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
-                if (convertedArgumentCount != arguments.Length) {
-                    return -1;
+                if (/*convertedArgumentCount != arguments.Length || */convertedArgumentCount != parameters.Count - implicitParameterCount) {
+                    return -1D;
                 }
 
                 return (double) explicitArgumentCount / parameters.Count;

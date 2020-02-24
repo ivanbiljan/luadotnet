@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Linq;
+using LuaDotNet.Exceptions;
 using Xunit;
 
 namespace LuaDotNet.Tests.Marshalling {
@@ -30,6 +31,15 @@ namespace LuaDotNet.Tests.Marshalling {
 
             public int Method2(params int[] @params) => @params.Sum() + 1;
             #endregion
+        }
+
+        [Fact]
+        public void Method1_InsufficientArgs_ThrowsLuaException() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("test", new Test());
+                
+                Assert.Throws<LuaException>(() => lua.DoString("return test:Method1(5)"));
+            }
         }
 
         [Fact]
