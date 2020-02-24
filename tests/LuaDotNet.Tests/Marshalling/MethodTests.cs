@@ -41,8 +41,8 @@ namespace LuaDotNet.Tests.Marshalling {
                 
                 var results = lua.DoString("return Int32.TryParse('5')");
                 
-                Assert.Equal(5L, results[0]);
-                Assert.Equal(true, results[1]);
+                Assert.Equal(true, results[0]);
+                Assert.Equal(5L, results[1]);
             }
         }
 
