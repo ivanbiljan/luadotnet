@@ -52,7 +52,6 @@ namespace LuaDotNet {
 
             double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args) {
                 args = new object[parameters.Count];
-                var convertedArgumentCount = 0;
                 var explicitArgumentCount = 0;
                 var implicitParameterCount = 0;
                 for (var i = 0; i < parameters.Count; ++i) {
@@ -86,14 +85,13 @@ namespace LuaDotNet {
                     }
 
                     args[i] = obj;
-                    ++convertedArgumentCount;
                     ++explicitArgumentCount;
                 }
 
                 
                 // If the number of converted arguments does not match the number of arguments passed to the method call that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
-                if (/*convertedArgumentCount != arguments.Length || */convertedArgumentCount != parameters.Count - implicitParameterCount) {
+                if (/*convertedArgumentCount != arguments.Length || */explicitArgumentCount != parameters.Count - implicitParameterCount) {
                     return -1D;
                 }
 
