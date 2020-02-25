@@ -56,7 +56,7 @@ namespace LuaDotNet {
                 var implicitParameterCount = 0;
                 for (var i = 0; i < parameters.Count; ++i) {
                     var parameter = parameters.ElementAt(i);
-                    if (parameter.IsOut) {
+                    if (parameter.IsOut || parameter.ParameterType.IsByRef) {
                         ++implicitParameterCount;
                         continue;
                     }
