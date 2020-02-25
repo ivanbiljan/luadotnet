@@ -20,6 +20,8 @@ namespace LuaDotNet.Tests.Marshalling {
                 return x + y;
             }
             
+            public int Method2(params int[] @params) => @params.Sum() + 1;
+            
             public bool Method2(bool firstArg) => firstArg;
 
             public string Method2(string firstArg) => firstArg;
@@ -29,8 +31,6 @@ namespace LuaDotNet.Tests.Marshalling {
             public double Method2(double firstArg) => firstArg;
 
             public int Method2(int firstArg, int secondArg) => firstArg + secondArg;
-
-            public int Method2(params int[] @params) => @params.Sum() + 1;
             #endregion
         }
 
@@ -63,6 +63,17 @@ namespace LuaDotNet.Tests.Marshalling {
                 var result = lua.DoString("return test:Method2(5)")[0];
                 
                 Assert.Equal(5L, result);
+            }
+        }
+
+        [Fact]
+        public void Method2_ParamsArray_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("test", new Test());
+                
+                var result = lua.DoString("return test:Method2(5, 5, 5, 5, 5)")[0];
+                
+                Assert.Equal(26L, result);
             }
         }
         

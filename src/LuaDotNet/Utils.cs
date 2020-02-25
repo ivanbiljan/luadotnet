@@ -11,11 +11,10 @@ namespace LuaDotNet {
         [UsedImplicitly]
         public static object CoerceObjectMaybe(object obj, Type type) =>
             TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
-
-        // TODO construct an overload resolution mechanism based on the specification from --> Done
+        
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
         public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
-            convertedArguments = new object[0];
+            convertedArguments = null;
             var bestExplicitScore = -1D;
             MethodBase method = null;
             foreach (var candidate in candidates) {
@@ -60,7 +59,7 @@ namespace LuaDotNet {
                         ++implicitParameterCount;
                         continue;
                     }
-                    
+
                     var argument = arguments.ElementAtOrDefault(i);
                     if (argument == null) {
                         if (!parameter.IsOptional) {
@@ -73,22 +72,26 @@ namespace LuaDotNet {
                     }
 
                     if (parameter.IsParamsArray()) {
-                        /* TODO implement this properly in the future
-                           The current system relies on Lua tables when it comes to parsing array,
-                           meaning that a MethodA(params object[] args) method has to be invoked like so: MethodA({1, 2, 3, ...})
-                           Such mechanism defeats the purpose of a params type[] parameter
-                         */
-                    }
+                        var arrayType = parameter.ParameterType.GetElementType();
+                        var array = Array.CreateInstance(arrayType, arguments.Length - i);
+                        for (var j = 0; j < array.Length; ++j) {
+                            if (!TryImplicitConversion(argument, arrayType, out var element)) {
+                                return -1D;
+                            }
 
-                    if (!TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
-                        break;
-                    }
+                            array.SetValue(element, j);
+                        }
 
-                    args[i] = obj;
-                    ++explicitArgumentCount;
+                        args[i] = array;
+                        ++implicitParameterCount;
+                    }
+                    else if (TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
+                        args[i] = obj;
+                        ++explicitArgumentCount;
+                    }
                 }
 
-                
+
                 // If the number of converted arguments does not match the number of arguments passed to the method call that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
                 if (/*convertedArgumentCount != arguments.Length || */explicitArgumentCount != parameters.Count - implicitParameterCount) {
