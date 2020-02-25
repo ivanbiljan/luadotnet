@@ -36,24 +36,24 @@ namespace LuaDotNet {
             RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.NonPublic | BindingFlags.Instance), this);
             RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance), this);
 
-//            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetExportedTypes());
-//            foreach (var type in exportedTypes) {
-//                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
-//                if (globalAttribute != null) {
-//                    ImportType(State);
-//                    continue;
-//                }
-//
-//                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
-//                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
-//                    if (globalAttribute == null) {
-//                        continue;
-//                    }
-//
-//                    var name = globalAttribute.NameOverride ?? method.Name;
-//                    SetGlobal(name, CreateFunction(method));
-//                }
-//            }
+            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.GetExportedTypes());
+            foreach (var type in exportedTypes) {
+                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
+                if (globalAttribute != null) {
+                    ImportType(State);
+                    continue;
+                }
+
+                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
+                    if (globalAttribute == null) {
+                        continue;
+                    }
+
+                    var name = globalAttribute.NameOverride ?? method.Name;
+                    SetGlobal(name, CreateFunction(method));
+                }
+            }
         }
 
         /// <summary>
