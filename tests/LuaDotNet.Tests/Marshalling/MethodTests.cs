@@ -31,6 +31,14 @@ namespace LuaDotNet.Tests.Marshalling {
             public double Method2(double firstArg) => firstArg;
 
             public int Method2(int firstArg, int secondArg) => firstArg + secondArg;
+
+            public int Method3(string s, out int retVal) {
+                if (int.TryParse(s, out retVal)) {
+                    return retVal;
+                }
+
+                return -1;
+            }
             #endregion
         }
 

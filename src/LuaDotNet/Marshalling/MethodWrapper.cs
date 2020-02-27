@@ -32,33 +32,6 @@ namespace LuaDotNet.Marshalling {
             }
 
             return InvokeAndPushResults(state, method, args);
-
-//            object result;
-//            try {
-//                result = method.Invoke(_target, args);
-//            }
-//            catch (TargetInvocationException ex) {
-//                throw new LuaException($"An exception has occured while calling method '{_methodName}': {ex}");
-//            }
-//
-//            var numberOfResults = 0;
-//            var parameters = method.GetParameters();
-//            for (var i = 0; i < parameters.Length; ++i) {
-//                var parameter = parameters[i];
-//                if (!parameter.IsOut && !parameter.IsRetval) {
-//                    continue;
-//                }
-//                
-//                objectMarshal.PushToStack(state, args[parameter.Position]);
-//                ++numberOfResults;
-//            }
-//
-//            if (method.ReturnType != typeof(void)) {
-//                objectMarshal.PushToStack(state, result);
-//                ++numberOfResults;
-//            }
-//
-//            return numberOfResults;
         }
 
         private int GenericMethodCallback(IntPtr state, MethodInfo method, object[] args) {
