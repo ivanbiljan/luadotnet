@@ -14,19 +14,20 @@ namespace LuaDotNet {
         
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
         public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
-            convertedArguments = null;
             var bestExplicitScore = -1D;
             MethodBase method = null;
+            
+            convertedArguments = null;
             foreach (var candidate in candidates) {
                 if (candidate == null) {
                     continue;
                 }
-                
+
                 var parameters = candidate.GetParameters();
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
                 }
-                
+
                 if (candidate.IsGenericMethodDefinition) {
                     var genericParameters = candidate.GetGenericArguments();
                     var skip = genericParameters.Where((genericParameterType, i) => arguments[i].GetType() != genericParameterType).Any();
@@ -49,10 +50,13 @@ namespace LuaDotNet {
                 }
             }
 
+            return method;
+
             double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args) {
-                args = new object[parameters.Count];
                 var explicitArgumentCount = 0;
                 var implicitParameterCount = 0;
+                
+                args = new object[parameters.Count];
                 for (var i = 0; i < parameters.Count; ++i) {
                     var parameter = parameters.ElementAt(i);
                     if (parameter.IsOut || parameter.ParameterType.IsByRef) {
@@ -92,16 +96,14 @@ namespace LuaDotNet {
                 }
 
 
-                // If the number of converted arguments does not match the number of arguments passed to the method call that either means
+                // If the number of converted arguments passed to the method call does not match the number of parameters that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
-                if (/*convertedArgumentCount != arguments.Length || */explicitArgumentCount != parameters.Count - implicitParameterCount) {
+                if (explicitArgumentCount != parameters.Count - implicitParameterCount) {
                     return -1D;
                 }
 
                 return (double) explicitArgumentCount / parameters.Count;
             }
-            
-            return method;
         }
 
         public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {

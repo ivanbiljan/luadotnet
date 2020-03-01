@@ -20,7 +20,7 @@ namespace LuaDotNet {
             LuaModule.Instance.LuaPushNil(Lua.State);
             while (LuaModule.Instance.LuaNext(Lua.State, -2) != 0) {
                 _dictionaryCtx.Add(objectMarshal.GetObject(lua.State, -2), objectMarshal.GetObject(lua.State, -1));
-                LuaModule.Instance.LuaPop(Lua.State, 1); // pop the value, leave the key
+                LuaModule.Instance.LuaPop(Lua.State, 1);
             }
         }
 
@@ -61,7 +61,6 @@ namespace LuaDotNet {
             objectMarshal.PushToStack(Lua.State, key);
             objectMarshal.PushToStack(Lua.State, value);
             LuaModule.Instance.LuaRawSet(Lua.State, -3);
-            //LuaModule.Instance.LuaPop(Lua.State, 1);
 
             _dictionaryCtx.Add(key, value);
         }

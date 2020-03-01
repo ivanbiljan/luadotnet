@@ -49,7 +49,6 @@ namespace LuaDotNet {
         }
 
         private void ReleaseUnmanagedResources() {
-            // TODO release unmanaged resources here
             if (Reference == LuaModule.LuaRefNil || Reference == LuaModule.LuaNoRef) {
                 return;
             }

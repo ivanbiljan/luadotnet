@@ -96,7 +96,7 @@ namespace LuaDotNet {
         /// <exception cref="LuaException">The callee's stack does not have enough space to fit the results.</exception>
         public (bool success, string errorMessage, object[] results) Resume(int nargs = 0) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-            var (success, errorMsg, res) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
+            var (success, errorMsg, results) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
             if (!LuaModule.Instance.LuaCheckStack(Lua.State, nargs)) {
                 throw new LuaException("The stack does not have enough space to fit that many arguments.");
             }
@@ -118,24 +118,19 @@ namespace LuaDotNet {
                 }
 
                 // Propagate the results back to the caller
-                LuaModule.Instance.LuaXMove(Lua.State, Lua.State, numberOfResults);
-                res = new object[numberOfResults];
-                var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
-                for (var i = oldStackTop + 1; i <= newStackTop; ++i) {
-                    res[i - oldStackTop - 1] = objectMarshal.GetObject(Lua.State, i);
-                }
-
+                LuaModule.Instance.LuaXMove(CoroutineState, Lua.State, numberOfResults);
+                results = objectMarshal.GetObjects(Lua.State, oldStackTop + 1, LuaModule.Instance.LuaGetTop(Lua.State));
                 LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
                 success = true;
             }
             else {
-                LuaModule.Instance.LuaXMove(Lua.State, Lua.State, 1); // Propagate the error message back to the caller
+                LuaModule.Instance.LuaXMove(CoroutineState, Lua.State, 1); // Propagate the error message back to the caller
                 errorMsg = (string) objectMarshal.GetObject(Lua.State, -1); // Get the error message
                 LuaModule.Instance.LuaPop(Lua.State, 1); // Pop the error message
                 success = false;
             }
 
-            return (success, errorMsg, res);
+            return (success, errorMsg, results);
         }
 
         /// <summary>
@@ -154,7 +149,7 @@ namespace LuaDotNet {
         public (bool success, string errorMessage, object[] results) Resume(object[] arguments = null) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
             var args = arguments ?? new object[0];
-            var (success, errorMsg, res) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
+            var (success, errorMsg, results) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
             if (!LuaModule.Instance.LuaCheckStack(Lua.State, args.Length)) {
                 throw new LuaException("The stack does not have enough space to fit that many arguments.");
             }
@@ -168,8 +163,7 @@ namespace LuaDotNet {
                 objectMarshal.PushToStack(Lua.State, arg);
             }
 
-            var threadStatus =
-                (LuaErrorCode) LuaModule.Instance.LuaResume(Lua.State, default(IntPtr), args.Length, out _);
+            var threadStatus = (LuaErrorCode) LuaModule.Instance.LuaResume(CoroutineState, default(IntPtr), args.Length, out _);
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield) {
                 // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
@@ -181,10 +175,10 @@ namespace LuaDotNet {
 
                 // Propagate the results back to the caller
                 LuaModule.Instance.LuaXMove(Lua.State, Lua.State, numberOfResults);
-                res = new object[numberOfResults];
+                results = new object[numberOfResults];
                 var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
                 for (var i = oldStackTop + 1; i <= newStackTop; ++i) {
-                    res[i - oldStackTop - 1] = objectMarshal.GetObject(Lua.State, i);
+                    results[i - oldStackTop - 1] = objectMarshal.GetObject(Lua.State, i);
                 }
 
                 LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
@@ -198,7 +192,7 @@ namespace LuaDotNet {
                 success = false;
             }
 
-            return (success, errorMsg, res);
+            return (success, errorMsg, results);
         }
     }
 }

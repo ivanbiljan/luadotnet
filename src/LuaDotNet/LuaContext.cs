@@ -293,7 +293,6 @@ namespace LuaDotNet {
         }
 
         private void ReleaseUnmanagedResources() {
-            // TODO release unmanaged resources here
             LuaModule.Instance.LuaClose(State);
         }
 
