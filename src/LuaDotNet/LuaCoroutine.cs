@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Marshalling;
@@ -61,7 +62,7 @@ namespace LuaDotNet {
                     return CoroutineStatus.Running;
                 }
 
-                var status = (LuaErrorCode) LuaModule.Instance.LuaStatus(Lua.State);
+                var status = LuaModule.Instance.LuaStatus(Lua.State);
                 switch (status) {
                     case LuaErrorCode.LuaOk:
                         if (LuaModule.Instance.LuaGetStack(Lua.State, 0, out _) == 1) {
@@ -97,21 +98,20 @@ namespace LuaDotNet {
         public (bool success, string errorMessage, object[] results) Resume(int nargs = 0) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
             var (success, errorMsg, results) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
-            if (!LuaModule.Instance.LuaCheckStack(Lua.State, nargs)) {
+            if (!LuaModule.Instance.LuaCheckStack(CoroutineState, nargs)) {
                 throw new LuaException("The stack does not have enough space to fit that many arguments.");
             }
 
-            if (LuaModule.Instance.LuaStatus(Lua.State) == (int) LuaErrorCode.LuaOk &&
-                LuaModule.Instance.LuaGetTop(Lua.State) == 0) {
+            if (LuaModule.Instance.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk && LuaModule.Instance.LuaGetTop(CoroutineState) == 0) {
                 throw new LuaException("Cannot resume a dead coroutine.");
             }
 
-            LuaModule.Instance.LuaXMove(Lua.State, Lua.State, nargs); // Exchange the requested arguments between threads
-            var threadStatus = (LuaErrorCode) LuaModule.Instance.LuaResume(Lua.State, default(IntPtr), nargs, out _);
+            LuaModule.Instance.LuaXMove(Lua.State, CoroutineState, nargs); // Exchange the requested arguments between threads
+            var threadStatus = LuaModule.Instance.LuaResume(CoroutineState, default(IntPtr), nargs, out _);
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield) {
                 // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
-                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State);
+                var numberOfResults = LuaModule.Instance.LuaGetTop(CoroutineState);
                 if (!LuaModule.Instance.LuaCheckStack(Lua.State, numberOfResults + 1)) {
                     LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
                     throw new LuaException("The stack does not have enough space to fit that many results.");
@@ -130,6 +130,8 @@ namespace LuaDotNet {
                 success = false;
             }
 
+            Debug.WriteLine(success);
+            Debug.WriteLine(string.Join(", ", results));
             return (success, errorMsg, results);
         }
 
@@ -146,35 +148,33 @@ namespace LuaDotNet {
         /// <exception cref="LuaException">The callee's stack does not have enough space to fit the arguments.</exception>
         /// <exception cref="LuaException">The coroutine is dead.</exception>
         /// <exception cref="LuaException">The callee's stack does not have enough space to fit the results.</exception>
-        public (bool success, string errorMessage, object[] results) Resume(object[] arguments = null) {
+        public (bool success, string errorMessage, object[] results) Resume(params object[] arguments) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
             var args = arguments ?? new object[0];
             var (success, errorMsg, results) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
-            if (!LuaModule.Instance.LuaCheckStack(Lua.State, args.Length)) {
+            if (!LuaModule.Instance.LuaCheckStack(CoroutineState, args.Length)) {
                 throw new LuaException("The stack does not have enough space to fit that many arguments.");
             }
 
-            if (LuaModule.Instance.LuaStatus(Lua.State) == (int) LuaErrorCode.LuaOk &&
-                LuaModule.Instance.LuaGetTop(Lua.State) == 0) {
+            if (LuaModule.Instance.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk && LuaModule.Instance.LuaGetTop(CoroutineState) == 0) {
                 throw new LuaException("Cannot resume a dead coroutine.");
             }
 
             foreach (var arg in args) {
-                objectMarshal.PushToStack(Lua.State, arg);
+                objectMarshal.PushToStack(CoroutineState, arg);
             }
 
-            var threadStatus = (LuaErrorCode) LuaModule.Instance.LuaResume(CoroutineState, default(IntPtr), args.Length, out _);
+            var threadStatus = LuaModule.Instance.LuaResume(CoroutineState, default(IntPtr), args.Length, out _);
             var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
             if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield) {
                 // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
-                var numberOfResults = LuaModule.Instance.LuaGetTop(Lua.State);
+                var numberOfResults = LuaModule.Instance.LuaGetTop(CoroutineState);
                 if (!LuaModule.Instance.LuaCheckStack(Lua.State, numberOfResults + 1)) {
-                    LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
                     throw new LuaException("The stack does not have enough space to fit that many results.");
                 }
 
                 // Propagate the results back to the caller
-                LuaModule.Instance.LuaXMove(Lua.State, Lua.State, numberOfResults);
+                LuaModule.Instance.LuaXMove(CoroutineState, Lua.State, numberOfResults);
                 results = new object[numberOfResults];
                 var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
                 for (var i = oldStackTop + 1; i <= newStackTop; ++i) {

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using JetBrains.Annotations;
@@ -11,12 +10,12 @@ namespace LuaDotNet {
         [UsedImplicitly]
         public static object CoerceObjectMaybe(object obj, Type type) =>
             TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
-        
+
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
         public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
             var bestExplicitScore = -1D;
             MethodBase method = null;
-            
+
             convertedArguments = null;
             foreach (var candidate in candidates) {
                 if (candidate == null) {
@@ -55,7 +54,7 @@ namespace LuaDotNet {
             double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args) {
                 var explicitArgumentCount = 0;
                 var implicitParameterCount = 0;
-                
+
                 args = new object[parameters.Count];
                 for (var i = 0; i < parameters.Count; ++i) {
                     var parameter = parameters.ElementAt(i);

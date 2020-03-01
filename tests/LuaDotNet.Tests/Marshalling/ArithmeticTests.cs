@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using Xunit;
 
 namespace LuaDotNet.Tests.Marshalling {
@@ -13,9 +12,9 @@ namespace LuaDotNet.Tests.Marshalling {
                 Numerator = numerator;
                 Denominator = denominator;
             }
-            
+
             public int Numerator { get; }
-            
+
             public int Denominator { get; }
 
             public static Fraction operator +(Fraction a) => a;
@@ -25,7 +24,7 @@ namespace LuaDotNet.Tests.Marshalling {
                 => new Fraction(a.Numerator * b.Denominator + b.Numerator * a.Denominator, a.Denominator * b.Denominator);
 
             public static Fraction operator -(Fraction a, Fraction b)
-                => a + (-b);
+                => a + -b;
 
             public static Fraction operator *(Fraction a, Fraction b)
                 => new Fraction(a.Numerator * b.Numerator, a.Denominator * b.Denominator);
@@ -48,8 +47,34 @@ namespace LuaDotNet.Tests.Marshalling {
                 lua.SetGlobal("b", new Fraction(1, 2));
 
                 var result = (Fraction) lua.DoString("return a + b")[0];
-                
+
                 Assert.Equal(14, result.Numerator);
+                Assert.Equal(8, result.Denominator);
+            }
+        }
+
+        [Fact]
+        public void Divide_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("a", new Fraction(5, 4));
+                lua.SetGlobal("b", new Fraction(1, 2));
+
+                var result = (Fraction) lua.DoString("return a / b")[0];
+
+                Assert.Equal(10, result.Numerator);
+                Assert.Equal(4, result.Denominator);
+            }
+        }
+
+        [Fact]
+        public void Multiply_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("a", new Fraction(5, 4));
+                lua.SetGlobal("b", new Fraction(1, 2));
+
+                var result = (Fraction) lua.DoString("return a * b")[0];
+
+                Assert.Equal(5, result.Numerator);
                 Assert.Equal(8, result.Denominator);
             }
         }
@@ -61,35 +86,9 @@ namespace LuaDotNet.Tests.Marshalling {
                 lua.SetGlobal("b", new Fraction(1, 2));
 
                 var result = (Fraction) lua.DoString("return a - b")[0];
-                
+
                 Assert.Equal(6, result.Numerator);
                 Assert.Equal(8, result.Denominator);
-            }
-        }
-
-        [Fact]
-        public void Multiply_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("a", new Fraction(5, 4));
-                lua.SetGlobal("b", new Fraction(1, 2));
-
-                var result = (Fraction) lua.DoString("return a * b")[0];
-                
-                Assert.Equal(5, result.Numerator);
-                Assert.Equal(8, result.Denominator);
-            }
-        }
-        
-        [Fact]
-        public void Divide_IsCorrect() {
-            using (var lua = new LuaContext()) {
-                lua.SetGlobal("a", new Fraction(5, 4));
-                lua.SetGlobal("b", new Fraction(1, 2));
-
-                var result = (Fraction) lua.DoString("return a / b")[0];
-                
-                Assert.Equal(10, result.Numerator);
-                Assert.Equal(4, result.Denominator);
             }
         }
     }

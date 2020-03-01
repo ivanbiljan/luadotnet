@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -33,27 +32,30 @@ namespace LuaDotNet {
             ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
             Metamethods.CreateMetatables(State);
 
-            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.NonPublic | BindingFlags.Instance), this);
-            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance), this);
+            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.NonPublic | BindingFlags.Instance),
+                this);
+            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance),
+                this);
 
-            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.GetExportedTypes());
-            foreach (var type in exportedTypes) {
-                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
-                if (globalAttribute != null) {
-                    ImportType(State);
-                    continue;
-                }
-
-                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
-                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
-                    if (globalAttribute == null) {
-                        continue;
-                    }
-
-                    var name = globalAttribute.NameOverride ?? method.Name;
-                    SetGlobal(name, CreateFunction(method));
-                }
-            }
+            // TODO code below leaves unit tests hanging when executed in bulk
+//            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.GetExportedTypes());
+//            foreach (var type in exportedTypes) {
+//                var globalAttribute = type.GetCustomAttribute<LuaGlobalAttribute>();
+//                if (globalAttribute != null) {
+//                    ImportType(State);
+//                    continue;
+//                }
+//
+//                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static)) {
+//                    globalAttribute = method.GetCustomAttribute<LuaGlobalAttribute>();
+//                    if (globalAttribute == null) {
+//                        continue;
+//                    }
+//
+//                    var name = globalAttribute.NameOverride ?? method.Name;
+//                    SetGlobal(name, CreateFunction(method));
+//                }
+//            }
         }
 
         /// <summary>
@@ -194,13 +196,13 @@ namespace LuaDotNet {
                 throw new ArgumentNullException(nameof(luaChunk));
             }
 
-            LuaErrorCode errorCode;
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            if ((errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8))) == LuaErrorCode.LuaOk) {
+            var errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
+            if (errorCode == LuaErrorCode.LuaOk) {
                 return LuaModule.Instance.PCallKInternal(State, numberOfResults: numberOfResults);
             }
 
             // Lua pushes an error message in case of errors
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             var errorMessage = (string) objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
             throw new LuaException($"[{errorCode}]: {errorMessage}");
@@ -292,10 +294,6 @@ namespace LuaDotNet {
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        private void ReleaseUnmanagedResources() {
-            LuaModule.Instance.LuaClose(State);
-        }
-
         private int ImportType(IntPtr state) {
             var typeName = (string) _objectMarshal.GetObject(state, -1);
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
@@ -331,6 +329,10 @@ namespace LuaDotNet {
             }
 
             return 0;
+        }
+
+        private void ReleaseUnmanagedResources() {
+            LuaModule.Instance.LuaClose(State);
         }
     }
 }

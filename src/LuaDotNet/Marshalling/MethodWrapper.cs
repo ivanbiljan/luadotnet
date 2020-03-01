@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using LuaDotNet.Exceptions;
@@ -74,7 +73,7 @@ namespace LuaDotNet.Marshalling {
                 objectMarshal.PushToStack(state, result);
                 ++numberOfResults;
             }
-            
+
             var parameters = method.GetParameters();
             for (var i = 0; i < parameters.Length; ++i) {
                 var parameter = parameters[i];

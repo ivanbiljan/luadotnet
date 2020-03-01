@@ -3,12 +3,12 @@ using LuaDotNet.Exceptions;
 using Xunit;
 
 namespace LuaDotNet.Tests {
-    public sealed class LuaFunctionFacts {
+    public sealed class LuaFunctionTests {
         private readonly Func<int, int, int> _FactDelegate = (x, y) => x + y;
 
         [Theory]
-        [InlineData(1, 2, 3)]
-        [InlineData(true, 1, "true")]
+        [InlineData(1L, 2L, 3L)]
+        [InlineData(true, 1L, "true")]
         public void LoadString_VarArgs_IsCorrect(params object[] args) {
             using (var lua = new LuaContext()) {
                 var function = lua.LoadString("return ...");
@@ -21,7 +21,7 @@ namespace LuaDotNet.Tests {
         public void CreateFunction_Delegate_IsCorrect() {
             using (var lua = new LuaContext()) {
                 var function = lua.CreateFunction(_FactDelegate);
-                Assert.Equal(5, function.Call(2, 3)[0]);
+                Assert.Equal(5L, function.Call(2, 3)[0]);
             }
         }
 
@@ -43,7 +43,7 @@ namespace LuaDotNet.Tests {
         public void LoadString_SingleResult_IsCorrect() {
             using (var lua = new LuaContext()) {
                 var function = lua.LoadString("return 5");
-                Assert.Equal(5, function.Call()[0]);
+                Assert.Equal(5L, function.Call()[0]);
             }
         }
 
