@@ -22,7 +22,7 @@ namespace LuaDotNet {
                     continue;
                 }
 
-                var parameters = candidate.GetParameters();
+                var parameters = candidate.IsExtensionMethod() ? candidate.GetParameters().Skip(1).ToArray() : candidate.GetParameters();
                 if (parameters.Length == 0 && arguments.Length == 0) {
                     return candidate;
                 }

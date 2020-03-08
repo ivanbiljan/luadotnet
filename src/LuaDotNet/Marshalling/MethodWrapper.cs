@@ -70,7 +70,12 @@ namespace LuaDotNet.Marshalling {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             object result;
             try {
-                result = method.Invoke(_target, args);
+                if (method.IsExtensionMethod()) {
+                    result = method.Invoke(null, new[] {_target}.Concat(args).ToArray());
+                }
+                else {
+                    result = method.Invoke(_target, args);
+                }
             }
             catch (TargetInvocationException ex) {
                 throw new LuaException($"An exception has occured while calling method '{method.Name}': {ex}");

@@ -4,8 +4,15 @@ using LuaDotNet.Exceptions;
 using Xunit;
 
 namespace LuaDotNet.Tests.Marshalling {
+    public static class TestExtensions {
+        public static string ExtensionMethod(this MethodTests.Test test, string returnValue) {
+            return returnValue;
+        }
+    }
+    
     public class MethodTests {
-        private class Test {
+
+        public class Test {
             #region Do Not Run Code Cleanup, Order Is Important
 
             public int Method1(int x, int y, bool optionalTest = false) {
@@ -39,6 +46,17 @@ namespace LuaDotNet.Tests.Marshalling {
             }
 
             #endregion
+        }
+
+        [Fact]
+        public void ExtensionMethod_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.SetGlobal("test", new Test());
+
+                var result = lua.DoString("return test:ExtensionMethod('Hello, World')")[0];
+                
+                Assert.Equal("Hello, World", result);
+            }
         }
 
         [Fact]
