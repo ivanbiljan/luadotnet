@@ -12,8 +12,7 @@ namespace LuaDotNet.Interactive {
                     input = Console.ReadLine() ?? string.Empty;
                     try {
                         if (File.Exists(input)) {
-                            // run file
-                            Console.Write("Run file");
+                            lua.DoFile(input);
                         }
                         else {
                             lua.DoString(input);

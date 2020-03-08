@@ -213,6 +213,35 @@ namespace LuaDotNet {
         }
 
         /// <summary>
+        /// Loads the given Lua file and runs it.
+        /// </summary>
+        /// <param name="file">The Lua file.</param>
+        /// <param name="numberOfResults">The number of results to return.</param>
+        /// <returns>The results.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
+        /// <exception cref="FileNotFoundException"><paramref name="file"/> is invalid or not a .lua file.</exception>
+        /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
+        public object[] DoFile([NotNull] string file, int numberOfResults = LuaModule.LuaMultRet) {
+            if (file == null) {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            if (!File.Exists(file) || !Path.GetExtension(file).Equals(".lua", StringComparison.InvariantCultureIgnoreCase)) {
+                throw new FileNotFoundException();
+            }
+
+            var errorCode = LuaModule.Instance.LuaLLoadString(State, File.ReadAllText(file).GetEncodedString(Encoding.UTF8));
+            if (errorCode == LuaErrorCode.LuaOk) {
+                return LuaModule.Instance.PCallKInternal(State, null, numberOfResults);
+            }
+            
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            var errorMessage = (string) objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+            throw new LuaException($"[{errorCode}]: {errorMessage}");
+        }
+        
+        /// <summary>
         ///     Returns the value of a global variable with the specified name.
         /// </summary>
         /// <param name="name">The name, which must not be <c>null</c>.</param>
