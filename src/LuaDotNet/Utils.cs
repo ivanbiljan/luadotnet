@@ -12,9 +12,9 @@ namespace LuaDotNet {
             TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
 
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
-        public static MethodBase PickOverload(IEnumerable<MethodBase> candidates, object[] arguments, out object[] convertedArguments) {
+        public static T PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments) where T : MethodBase {
             var bestExplicitScore = -1D;
-            MethodBase method = null;
+            var method = default(T);
 
             convertedArguments = null;
             foreach (var candidate in candidates) {

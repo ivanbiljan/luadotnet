@@ -53,5 +53,17 @@ namespace LuaDotNet.Tests.Marshalling {
                 Assert.Throws<LuaException>(() => lua.DoString("TestClass.2"));
             }
         }
+        
+        [Fact]
+        public void ImportType_IsCorrect() {
+            using (var lua = new LuaContext()) {
+                lua.DoString("importType('Int32')");
+
+                lua.DoString("success, result = Int32.TryParse('10')");
+                
+                Assert.True((bool) lua.GetGlobal("success"));
+                Assert.Equal(10L, lua.GetGlobal("result"));
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using LuaDotNet.Exceptions;
@@ -7,21 +8,28 @@ using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling {
     internal sealed class MethodWrapper {
+        private readonly bool _isStatic;
         private readonly string _methodName; // Debugging purposes only
         private readonly MethodInfo[] _methods;
         private readonly object _target;
 
         public MethodWrapper(string methodName, Type type, object target = null) {
+            _isStatic = target == null;
             _methodName = methodName;
             _methods = type.GetOrCreateMetadata().GetMethods(methodName, target != null).ToArray();
             _target = target;
         }
 
+        public MethodWrapper(MethodInfo method, object target = null) {
+            _isStatic = true;
+            _methods = new [] {method};
+            _target = target;
+        }
+
         public int Callback(IntPtr state) {
-            var isStatic = _target == null;
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var args = objectMarshal.GetObjects(state, isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
-            var method = Utils.PickOverload(_methods, args, out args) as MethodInfo;
+            var args = objectMarshal.GetObjects(state, _isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
+            var method = Utils.PickOverload(_methods, args, out args);
             if (method == null) {
                 throw new LuaException($"Cannot resolve method call: {_methodName}");
             }

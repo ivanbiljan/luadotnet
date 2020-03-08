@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -32,8 +34,7 @@ namespace LuaDotNet {
             ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
             Metamethods.CreateMetatables(State);
 
-            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.NonPublic | BindingFlags.Instance),
-                this);
+            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.Public | BindingFlags.Instance), this);
             RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance),
                 this);
 
@@ -107,6 +108,8 @@ namespace LuaDotNet {
                 throw new ArgumentNullException(nameof(@delegate));
             }
 
+            Debug.WriteLine(@delegate.Target);
+            Debug.WriteLine(@delegate.Target.GetType());
             return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
         }
 
@@ -122,50 +125,51 @@ namespace LuaDotNet {
                 throw new ArgumentNullException(nameof(methodInfo));
             }
 
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            var objectMarshalGetObjectMethod = typeof(ObjectMarshal).GetMethod("GetObject");
-            var objectMarshalPushObjectMethod = typeof(ObjectMarshal).GetMethod("PushToStack");
-
-            var luaStateParameter = Expression.Parameter(typeof(IntPtr));
-            var argumentExpressions = new List<Expression>();
-
-            var methodParameters = methodInfo.GetParameters();
-            for (var i = 0; i < methodParameters.Length; ++i) {
-                var parameter = methodParameters[i];
-                var getObjectCallExpression = Expression.Call(
-                    Expression.Constant(objectMarshal),
-                    objectMarshalGetObjectMethod,
-                    luaStateParameter,
-                    Expression.Constant(i + 1));
-                var coerceObjectCallExpression = Expression.Call(
-                    typeof(Utils).GetMethod("CoerceObjectMaybe"),
-                    getObjectCallExpression,
-                    Expression.Constant(parameter.ParameterType));
-                argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
-            }
-
-            var methodCallExpression = Expression.Call(Expression.Convert(Expression.Constant(target), methodInfo.DeclaringType),
-                methodInfo, argumentExpressions);
-            var functionBody = new List<Expression>();
-            if (methodInfo.ReturnType == typeof(void)) {
-                functionBody.Add(methodCallExpression);
-                functionBody.Add(Expression.Constant(0));
-            }
-            else {
-                // TODO push ref/out parameters as well?
-                // In case of a non-void method we have to push the result of the method call to Lua's stack
-                functionBody.Add(Expression.Call(
-                    Expression.Constant(objectMarshal),
-                    objectMarshalPushObjectMethod,
-                    luaStateParameter,
-                    Expression.Convert(methodCallExpression, typeof(object))));
-                functionBody.Add(Expression.Constant(1));
-            }
-
-            var functionExpression = Expression.Block(functionBody.ToArray());
-            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter)
-                .Compile();
-            return new LuaFunction(this, luaCFunction);
+//            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+//            var objectMarshalGetObjectMethod = typeof(ObjectMarshal).GetMethod("GetObject");
+//            var objectMarshalPushObjectMethod = typeof(ObjectMarshal).GetMethod("PushToStack");
+//
+//            var luaStateParameter = Expression.Parameter(typeof(IntPtr));
+//            var argumentExpressions = new List<Expression>();
+//
+//            var methodParameters = methodInfo.GetParameters();
+//            for (var i = 0; i < methodParameters.Length; ++i) {
+//                var parameter = methodParameters[i];
+//                var getObjectCallExpression = Expression.Call(
+//                    Expression.Constant(objectMarshal),
+//                    objectMarshalGetObjectMethod,
+//                    luaStateParameter,
+//                    Expression.Constant(i + 1));
+//                var coerceObjectCallExpression = Expression.Call(
+//                    typeof(Utils).GetMethod("CoerceObjectMaybe"),
+//                    getObjectCallExpression,
+//                    Expression.Constant(parameter.ParameterType));
+//                argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
+//            }
+//
+//            Debug.WriteLine("Dec: " + methodInfo.DeclaringType);
+//            var methodCallExpression = Expression.Call(Expression.Convert(Expression.Constant(target), methodInfo.DeclaringType),
+//                methodInfo, argumentExpressions);
+//            var functionBody = new List<Expression>();
+//            if (methodInfo.ReturnType == typeof(void)) {
+//                functionBody.Add(methodCallExpression);
+//                functionBody.Add(Expression.Constant(0));
+//            }
+//            else {
+//                // TODO push ref/out parameters as well?
+//                // In case of a non-void method we have to push the result of the method call to Lua's stack
+//                functionBody.Add(Expression.Call(
+//                    Expression.Constant(objectMarshal),
+//                    objectMarshalPushObjectMethod,
+//                    luaStateParameter,
+//                    Expression.Convert(methodCallExpression, typeof(object))));
+//                functionBody.Add(Expression.Constant(1));
+//            }
+//
+//            var functionExpression = Expression.Block(functionBody.ToArray());
+//            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter)
+//                .Compile();
+            return new LuaFunction(this, new MethodWrapper(methodInfo, target).Callback);
         }
 
         /// <summary>
@@ -266,7 +270,7 @@ namespace LuaDotNet {
             }
 
             var oldTop = LuaModule.Instance.LuaGetTop(State);
-            var function = CreateFunction(method);
+            var function = CreateFunction(method, target);
             SetGlobal(path, function);
             LuaModule.Instance.LuaSetTop(State, oldTop);
         }
@@ -294,9 +298,8 @@ namespace LuaDotNet {
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        private int ImportType(IntPtr state) {
-            var typeName = (string) _objectMarshal.GetObject(state, -1);
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+        public void ImportType(string typeName) {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic)) {
                 foreach (var type in assembly.GetExportedTypes()) {
                     if (type.Name != typeName && type.FullName != typeName) {
                         continue;
@@ -309,8 +312,6 @@ namespace LuaDotNet {
                     SetGlobal(type.Name, type);
                 }
             }
-
-            return 0;
         }
 
         private int LoadAssembly(IntPtr state) {

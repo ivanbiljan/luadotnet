@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
@@ -64,14 +67,17 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaXMove LuaXMove;
 
         static LuaModule() {
-            var runtimesDirectory = Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs");
-            if (runtimesDirectory.IsNullOrWhitespace()) {
-                throw new DirectoryNotFoundException("Cannot find Lua runtimes directory.");
-            }
-
             var architecture = IntPtr.Size == 8 ? "x64" : "x86";
             var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "lua53.so" : "lua53.dll";
-            Instance.Load(Path.Combine(runtimesDirectory, architecture, runtime));
+            var runtimePaths = new string[] {
+                //Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs", architecture, runtime),
+                Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime),
+                Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "..", "..", "..")
+            };
+            
+            Debug.WriteLine(string.Join(", ", runtimePaths));
+
+            Instance.Load(runtimePaths.First(File.Exists));
         }
 
         public static LuaModule Instance { get; } = new LuaModule();
