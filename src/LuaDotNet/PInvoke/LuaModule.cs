@@ -69,15 +69,12 @@ namespace LuaDotNet.PInvoke {
         static LuaModule() {
             var architecture = IntPtr.Size == 8 ? "x64" : "x86";
             var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "lua53.so" : "lua53.dll";
-            var runtimePaths = new string[] {
-                //Path.Combine(new Uri(Path.GetDirectoryName(typeof(LuaContext).Assembly.CodeBase)).LocalPath, "libs", architecture, runtime),
-                Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime),
-                Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "..", "..", "..")
-            };
+            var path = Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime);
+            if (!File.Exists(path)) {
+                throw new FileNotFoundException(path);
+            }
             
-            Debug.WriteLine(string.Join(", ", runtimePaths));
-
-            Instance.Load(runtimePaths.First(File.Exists));
+            Instance.Load(path);
         }
 
         public static LuaModule Instance { get; } = new LuaModule();

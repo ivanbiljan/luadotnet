@@ -17,6 +17,7 @@ namespace LuaDotNet.Marshalling {
             _target = target;
         }
 
+        [UsedImplicitly]
         public void Add([NotNull] LuaFunction luaFunction) {
             if (luaFunction == null) {
                 throw new ArgumentNullException(nameof(luaFunction));
