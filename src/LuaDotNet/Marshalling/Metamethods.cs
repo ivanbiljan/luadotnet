@@ -105,6 +105,7 @@ namespace LuaDotNet.Marshalling {
             var member = members[0];
             switch (member.MemberType) {
                 case MemberTypes.Event: // TODO
+                    objectMarshal.PushToStack(state, new RegisterEventHandler((EventInfo) member, obj));
                     break;
                 case MemberTypes.Field:
                     try {

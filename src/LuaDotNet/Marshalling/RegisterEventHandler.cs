@@ -41,5 +41,24 @@ namespace LuaDotNet.Marshalling {
                 throw new LuaException($"An exception has occured while adding an event handler: {ex}");
             }
         }
+
+        [UsedImplicitly]
+        public void Remove([NotNull] LuaFunction luaFunction) {
+            if (luaFunction == null) {
+                throw new ArgumentNullException(nameof(luaFunction));
+            }
+
+            if (!EventHandlers.TryGetValue(luaFunction, out var @delegate)) {
+                return;
+            }
+
+            try {
+                _event.RemoveEventHandler(_target, @delegate);
+                EventHandlers.Remove(luaFunction);
+            }
+            catch (TargetInvocationException ex) {
+                throw new LuaException($"An exception has occured while removing an event handler: {ex}");
+            }
+        }
     }
 }

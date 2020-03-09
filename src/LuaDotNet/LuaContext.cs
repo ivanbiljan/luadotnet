@@ -147,7 +147,6 @@ namespace LuaDotNet {
 //                argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
 //            }
 //
-//            Debug.WriteLine("Dec: " + methodInfo.DeclaringType);
 //            var methodCallExpression = Expression.Call(Expression.Convert(Expression.Constant(target), methodInfo.DeclaringType),
 //                methodInfo, argumentExpressions);
 //            var functionBody = new List<Expression>();
