@@ -1,0 +1,7 @@
+language: csharp
+solution: LuaDotNet.sln
+mono: none
+dotnet: 2.0.0
+script:
+    - cd tests/LuaDotNet.Tests
+    - dotnet test
