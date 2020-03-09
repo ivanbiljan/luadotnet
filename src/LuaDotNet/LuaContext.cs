@@ -35,8 +35,8 @@ namespace LuaDotNet {
             Metamethods.CreateMetatables(State);
 
             RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.Public | BindingFlags.Instance), this);
-            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance),
-                this);
+//            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance),
+//                this);
 
             // TODO code below leaves unit tests hanging when executed in bulk
 //            var exportedTypes = AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic).SelectMany(a => a.GetExportedTypes());
