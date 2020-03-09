@@ -68,7 +68,7 @@ namespace LuaDotNet.PInvoke {
 
         static LuaModule() {
             var architecture = IntPtr.Size == 8 ? "x64" : "x86";
-            var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "lua53.so" : "lua53.dll";
+            var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "liblua53.so" : "lua53.dll";
             var path = Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime);
             if (!File.Exists(path)) {
                 throw new FileNotFoundException(path);
