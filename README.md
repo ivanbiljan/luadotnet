@@ -1,5 +1,5 @@
 # luadotnet
-![Travis (.com)](https://img.shields.io/travis/com/ivanbiljan/luadotnet?label=tests) [![LICENSE](https://img.shields.io/github/license/ivanbiljan/luadotnet)](https://github.com/ivanbiljan/luadotnet/blob/master/LICENSE)
+[![Travis](https://img.shields.io/travis/com/ivanbiljan/luadotnet?label=tests)](https://travis-ci.com/ivanbiljan/luadotnet) [![LICENSE](https://img.shields.io/github/license/ivanbiljan/luadotnet)](https://github.com/ivanbiljan/luadotnet/blob/master/LICENSE)
 
 **luadotnet** is a .NET standard library that integrates the [Lua](https://lua.org) language into the .NET CLR. It provides an easy and effective way of embedding Lua scripts into .NET applications. It is built upon the .NET Standard API and targets Windows and Linux operating systems.
 
