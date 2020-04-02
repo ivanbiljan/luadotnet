@@ -35,6 +35,7 @@ namespace LuaDotNet {
     /// <summary>
     ///     Represents a Lua coroutine.
     /// </summary>
+    [PublicAPI]
     public sealed class LuaCoroutine : LuaObject {
         /// <inheritdoc />
         internal LuaCoroutine(LuaContext lua, int reference) : base(lua, reference) {
@@ -97,7 +98,6 @@ namespace LuaDotNet {
         /// <exception cref="LuaException">The callee's stack does not have enough space to fit the results.</exception>
         public (bool success, string errorMessage, object[] results) Resume(int nargs = 0) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-            var (success, errorMsg, results) = new ValueTuple<bool, string, object[]>(false, null, new object[0]);
             if (!LuaModule.Instance.LuaCheckStack(CoroutineState, nargs)) {
                 throw new LuaException("The stack does not have enough space to fit that many arguments.");
             }

@@ -107,9 +107,7 @@ namespace LuaDotNet {
             if (@delegate == null) {
                 throw new ArgumentNullException(nameof(@delegate));
             }
-
-            Debug.WriteLine(@delegate.Target);
-            Debug.WriteLine(@delegate.Target.GetType());
+            
             return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
         }
 
