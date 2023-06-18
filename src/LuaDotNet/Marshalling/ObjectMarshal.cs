@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling.Parsers;
 using LuaDotNet.PInvoke;
@@ -73,7 +74,8 @@ namespace LuaDotNet.Marshalling {
         }
 
         public object[] GetObjects(IntPtr state, int startIndex, int endIndex) {
-            var objs = new object[endIndex - startIndex + 1];
+            var numElements = endIndex - startIndex + 1 >= 0 ? endIndex - startIndex + 1 : 0;
+            var objs = new object[numElements];
             for (var i = startIndex; i <= endIndex; ++i) {
                 objs[i - startIndex] = GetObject(state, i);
             }

@@ -336,26 +336,24 @@ namespace LuaDotNet {
                     }
 
                     SetGlobal(type.Name, type);
+                    Console.WriteLine(type.Name);
                 }
             }
         }
 
-        private int LoadAssembly(IntPtr state) {
-            var assemblyFile = (string) _objectMarshal.GetObject(state, -1);
+        public void LoadAssembly(string name) {
             Assembly assembly = null;
 
             try {
-                assembly = Assembly.LoadFrom(assemblyFile);
+                assembly = Assembly.LoadFrom(name);
             }
             catch (FileNotFoundException) {
                 // Swallow the exception and attempt to resolve the assembly using the AssemblyName
             }
 
             if (assembly == null) {
-                Assembly.Load(AssemblyName.GetAssemblyName(assemblyFile));
+                Assembly.Load(AssemblyName.GetAssemblyName(name));
             }
-
-            return 0;
         }
 
         private void ReleaseUnmanagedResources() {

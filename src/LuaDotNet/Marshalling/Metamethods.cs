@@ -255,9 +255,9 @@ namespace LuaDotNet.Marshalling {
 
         private static int SetObjectMember(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var obj = objectMarshal.GetObject(state, 1) as Type;
+            var obj = objectMarshal.GetObject(state, 1);
             if (obj == null) {
-                throw new LuaException("Attempt to call __newindex on a null type reference.");
+                throw new LuaException("Attempt to call __newindex on a null object reference.");
             }
 
             if (!(objectMarshal.GetObject(state, 2) is string memberName)) {
@@ -269,9 +269,9 @@ namespace LuaDotNet.Marshalling {
 
         private static int SetTypeMember(IntPtr state) {
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-            var type = objectMarshal.GetObject(state, 1);
+            var type = objectMarshal.GetObject(state, 1) as Type;
             if (type == null) {
-                throw new LuaException("Attempt to call __newindex on a null object reference.");
+                throw new LuaException("Attempt to call __newindex on a null type reference.");
             }
 
             if (!(objectMarshal.GetObject(state, 2) is string memberName)) {

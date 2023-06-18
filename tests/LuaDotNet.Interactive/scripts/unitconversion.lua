@@ -36,5 +36,5 @@ intervals={
     else return value end
   end
   
-  print(convert_to(86400,"seconds","days"))
-  print(convert_to(1,"days","seconds"))
+  print("86400 is " .. convert_to(86400,"seconds","days") .. " days")
+  print("1 day is " .. convert_to(1,"days","seconds") .. " seconds")
