@@ -1,6 +1,7 @@
 ﻿using System;
 
-namespace LuaDotNet.PInvoke.LuaEvents {
+namespace LuaDotNet.PInvoke.LuaEvents
+{
     /// <summary>
     ///     Represents the type used for debugging functions.
     /// </summary>

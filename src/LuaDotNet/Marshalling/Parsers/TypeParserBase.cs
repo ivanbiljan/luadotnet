@@ -1,10 +1,13 @@
 ﻿using System;
 
-namespace LuaDotNet.Marshalling.Parsers {
-    public abstract class TypeParserBase : ITypeParser {
+namespace LuaDotNet.Marshalling.Parsers
+{
+    public abstract class TypeParserBase : ITypeParser
+    {
         protected LuaContext LuaContext;
 
-        protected TypeParserBase(LuaContext lua) {
+        protected TypeParserBase(LuaContext lua)
+        {
             LuaContext = lua ?? throw new ArgumentNullException(nameof(lua));
         }
 

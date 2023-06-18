@@ -1,11 +1,15 @@
 ﻿using LuaDotNet.Exceptions;
 using Xunit;
 
-namespace LuaDotNet.Tests {
-    public sealed class LuaCoroutineTests {
+namespace LuaDotNet.Tests
+{
+    public sealed class LuaCoroutineTests
+    {
         [Fact]
-        public void Resume_CoroutineCompleted_ThrowsLuaException() {
-            using (var lua = new LuaContext()) {
+        public void Resume_CoroutineCompleted_ThrowsLuaException()
+        {
+            using (var lua = new LuaContext())
+            {
                 var function = lua.LoadString("return 0");
                 var coroutine = lua.CreateCoroutine(function);
 
@@ -18,8 +22,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void Resume_ReturnsSomething_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Resume_ReturnsSomething_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var function = lua.LoadString("return 1, 3.3, 5, 'test', false");
                 var coroutine = lua.CreateCoroutine(function);
 
@@ -27,13 +33,20 @@ namespace LuaDotNet.Tests {
 
                 Assert.True(success);
                 Assert.Equal(5, results.Length);
-                Assert.Equal(new object[] {1L, 3.3, 5L, "test", false}, results);
+                Assert.Equal(
+                    new object[]
+                    {
+                        1L, 3.3, 5L, "test", false
+                    },
+                    results);
             }
         }
 
         [Fact]
-        public void Resume_TooManyArguments_ThrowsLuaException() {
-            using (var lua = new LuaContext()) {
+        public void Resume_TooManyArguments_ThrowsLuaException()
+        {
+            using (var lua = new LuaContext())
+            {
                 var function = lua.LoadString("return ...");
                 var coroutine = lua.CreateCoroutine(function);
 

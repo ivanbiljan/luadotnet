@@ -1,11 +1,16 @@
 ﻿using System;
 using Xunit;
 
-namespace LuaDotNet.Tests.Marshalling {
-    public class ArithmeticTests {
-        private struct Fraction {
-            public Fraction(int numerator, int denominator) {
-                if (denominator == 0) {
+namespace LuaDotNet.Tests.Marshalling
+{
+    public class ArithmeticTests
+    {
+        private struct Fraction
+        {
+            public Fraction(int numerator, int denominator)
+            {
+                if (denominator == 0)
+                {
                     throw new ArgumentException("Denominator cannot be zero.", nameof(denominator));
                 }
 
@@ -21,7 +26,9 @@ namespace LuaDotNet.Tests.Marshalling {
             public static Fraction operator -(Fraction a) => new Fraction(-a.Numerator, a.Denominator);
 
             public static Fraction operator +(Fraction a, Fraction b)
-                => new Fraction(a.Numerator * b.Denominator + b.Numerator * a.Denominator, a.Denominator * b.Denominator);
+                => new Fraction(
+                    a.Numerator * b.Denominator + b.Numerator * a.Denominator,
+                    a.Denominator * b.Denominator);
 
             public static Fraction operator -(Fraction a, Fraction b)
                 => a + -b;
@@ -29,8 +36,10 @@ namespace LuaDotNet.Tests.Marshalling {
             public static Fraction operator *(Fraction a, Fraction b)
                 => new Fraction(a.Numerator * b.Numerator, a.Denominator * b.Denominator);
 
-            public static Fraction operator /(Fraction a, Fraction b) {
-                if (b.Numerator == 0) {
+            public static Fraction operator /(Fraction a, Fraction b)
+            {
+                if (b.Numerator == 0)
+                {
                     throw new DivideByZeroException();
                 }
 
@@ -41,12 +50,14 @@ namespace LuaDotNet.Tests.Marshalling {
         }
 
         [Fact]
-        public void Add_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Add_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 lua.SetGlobal("a", new Fraction(5, 4));
                 lua.SetGlobal("b", new Fraction(1, 2));
 
-                var result = (Fraction) lua.DoString("return a + b")[0];
+                var result = (Fraction)lua.DoString("return a + b")[0];
 
                 Assert.Equal(14, result.Numerator);
                 Assert.Equal(8, result.Denominator);
@@ -54,12 +65,14 @@ namespace LuaDotNet.Tests.Marshalling {
         }
 
         [Fact]
-        public void Divide_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Divide_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 lua.SetGlobal("a", new Fraction(5, 4));
                 lua.SetGlobal("b", new Fraction(1, 2));
 
-                var result = (Fraction) lua.DoString("return a / b")[0];
+                var result = (Fraction)lua.DoString("return a / b")[0];
 
                 Assert.Equal(10, result.Numerator);
                 Assert.Equal(4, result.Denominator);
@@ -67,12 +80,14 @@ namespace LuaDotNet.Tests.Marshalling {
         }
 
         [Fact]
-        public void Multiply_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Multiply_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 lua.SetGlobal("a", new Fraction(5, 4));
                 lua.SetGlobal("b", new Fraction(1, 2));
 
-                var result = (Fraction) lua.DoString("return a * b")[0];
+                var result = (Fraction)lua.DoString("return a * b")[0];
 
                 Assert.Equal(5, result.Numerator);
                 Assert.Equal(8, result.Denominator);
@@ -80,12 +95,14 @@ namespace LuaDotNet.Tests.Marshalling {
         }
 
         [Fact]
-        public void Subtract_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Subtract_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 lua.SetGlobal("a", new Fraction(5, 4));
                 lua.SetGlobal("b", new Fraction(1, 2));
 
-                var result = (Fraction) lua.DoString("return a - b")[0];
+                var result = (Fraction)lua.DoString("return a - b")[0];
 
                 Assert.Equal(6, result.Numerator);
                 Assert.Equal(8, result.Denominator);

@@ -5,44 +5,59 @@ using System.Reflection;
 using JetBrains.Annotations;
 using LuaDotNet.Extensions;
 
-namespace LuaDotNet {
-    internal static class Utils {
+namespace LuaDotNet
+{
+    internal static class Utils
+    {
         [UsedImplicitly]
         public static object CoerceObjectMaybe(object obj, Type type) =>
             TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
 
         // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
-        public static T PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments) where T : MethodBase {
+        public static T PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments)
+            where T : MethodBase
+        {
             var bestExplicitScore = -1D;
             var method = default(T);
 
             convertedArguments = null;
-            foreach (var candidate in candidates) {
-                if (candidate == null) {
+            foreach (var candidate in candidates)
+            {
+                if (candidate == null)
+                {
                     continue;
                 }
 
-                var parameters = candidate.IsExtensionMethod() ? candidate.GetParameters().Skip(1).ToArray() : candidate.GetParameters();
-                if (parameters.Length == 0 && arguments.Length == 0) {
+                var parameters = candidate.IsExtensionMethod()
+                    ? candidate.GetParameters().Skip(1).ToArray()
+                    : candidate.GetParameters();
+                if (parameters.Length == 0 && arguments.Length == 0)
+                {
                     return candidate;
                 }
 
-                if (candidate.IsGenericMethodDefinition) {
+                if (candidate.IsGenericMethodDefinition)
+                {
                     var genericParameters = candidate.GetGenericArguments();
-                    var skip = genericParameters.Where((genericParameterType, i) => arguments[i].GetType() != genericParameterType).Any();
-                    if (skip) {
+                    var skip = genericParameters.Where(
+                        (genericParameterType, i) => arguments[i].GetType() != genericParameterType).Any();
+                    if (skip)
+                    {
                         continue;
                     }
                 }
 
-                if (parameters.Length < arguments.Length) {
-                    if (parameters.Length != 0 && !parameters[parameters.Length - 1].IsParamsArray()) {
+                if (parameters.Length < arguments.Length)
+                {
+                    if (parameters.Length != 0 && !parameters[parameters.Length - 1].IsParamsArray())
+                    {
                         continue;
                     }
                 }
 
                 var explicitFactor = CheckParameters(parameters, out var args);
-                if (explicitFactor > bestExplicitScore) {
+                if (explicitFactor > bestExplicitScore)
+                {
                     bestExplicitScore = explicitFactor;
                     convertedArguments = args;
                     method = candidate;
@@ -51,34 +66,44 @@ namespace LuaDotNet {
 
             return method;
 
-            double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args) {
+            double CheckParameters(IReadOnlyCollection<ParameterInfo> parameters, out object[] args)
+            {
                 var explicitArgumentCount = 0;
                 var implicitParameterCount = 0;
 
                 args = new object[parameters.Count];
-                for (var i = 0; i < parameters.Count; ++i) {
+                for (var i = 0; i < parameters.Count; ++i)
+                {
                     var parameter = parameters.ElementAt(i);
-                    if (parameter.IsOut || parameter.ParameterType.IsByRef) {
+                    if (parameter.IsOut || parameter.ParameterType.IsByRef)
+                    {
                         ++implicitParameterCount;
+
                         continue;
                     }
 
                     var argument = arguments.ElementAtOrDefault(i);
-                    if (argument == null) {
-                        if (!parameter.IsOptional) {
+                    if (argument == null)
+                    {
+                        if (!parameter.IsOptional)
+                        {
                             break;
                         }
 
                         args[i] = parameter.DefaultValue;
                         ++implicitParameterCount;
+
                         continue;
                     }
 
-                    if (parameter.IsParamsArray()) {
+                    if (parameter.IsParamsArray())
+                    {
                         var arrayType = parameter.ParameterType.GetElementType();
                         var array = Array.CreateInstance(arrayType, arguments.Length - i);
-                        for (var j = 0; j < array.Length; ++j) {
-                            if (!TryImplicitConversion(argument, arrayType, out var element)) {
+                        for (var j = 0; j < array.Length; ++j)
+                        {
+                            if (!TryImplicitConversion(argument, arrayType, out var element))
+                            {
                                 return -1D;
                             }
 
@@ -88,7 +113,8 @@ namespace LuaDotNet {
                         args[i] = array;
                         ++implicitParameterCount;
                     }
-                    else if (TryImplicitConversion(argument, parameter.ParameterType, out var obj)) {
+                    else if (TryImplicitConversion(argument, parameter.ParameterType, out var obj))
+                    {
                         args[i] = obj;
                         ++explicitArgumentCount;
                     }
@@ -97,26 +123,32 @@ namespace LuaDotNet {
 
                 // If the number of converted arguments passed to the method call does not match the number of parameters that either means
                 // that at least one argument in the argument list is not applicable or there are not enough arguments provided
-                if (explicitArgumentCount != parameters.Count - implicitParameterCount) {
+                if (explicitArgumentCount != parameters.Count - implicitParameterCount)
+                {
                     return -1D;
                 }
 
-                return (double) explicitArgumentCount / parameters.Count;
+                return (double)explicitArgumentCount / parameters.Count;
             }
         }
 
-        public static bool TryImplicitConversion(object obj, Type type, out object resultObj) {
+        public static bool TryImplicitConversion(object obj, Type type, out object resultObj)
+        {
             resultObj = obj;
-            switch (obj) {
+            switch (obj)
+            {
                 case long _ when type.IsInteger():
                 case double _ when type == typeof(float) || type == typeof(decimal):
                     resultObj = Convert.ChangeType(obj, type);
+
                     return true;
                 case LuaTable luaTable when type.IsArray:
                     var arrayType = type.GetElementType();
                     var array = Array.CreateInstance(arrayType, luaTable.Count);
-                    for (long i = 0; i < array.Length; ++i) {
-                        if (!TryImplicitConversion(luaTable[i + 1], arrayType, out var temp)) {
+                    for (long i = 0; i < array.Length; ++i)
+                    {
+                        if (!TryImplicitConversion(luaTable[i + 1], arrayType, out var temp))
+                        {
                             return false;
                         }
 
@@ -124,6 +156,7 @@ namespace LuaDotNet {
                     }
 
                     resultObj = array;
+
                     return true;
                 default:
                     return type.IsInstanceOfType(obj);

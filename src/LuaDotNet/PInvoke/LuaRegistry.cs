@@ -1,11 +1,13 @@
 ﻿using JetBrains.Annotations;
 
-namespace LuaDotNet.PInvoke {
+namespace LuaDotNet.PInvoke
+{
     /// <summary>
     ///     Holds constants related to the Lua registry. These values are constants pulled from the lua.h file.
     /// </summary>
     [PublicAPI]
-    public enum LuaRegistry {
+    public enum LuaRegistry
+    {
         /// <summary>
         ///     Gets the registry's index.
         /// </summary>

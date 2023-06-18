@@ -1,10 +1,12 @@
 ﻿using System;
 
-namespace LuaDotNet.Marshalling.Parsers {
+namespace LuaDotNet.Marshalling.Parsers
+{
     /// <summary>
     ///     Describes a type parser.
     /// </summary>
-    public interface ITypeParser {
+    public interface ITypeParser
+    {
         /// <summary>
         ///     Parses an object at the specified index in the stack of the specified Lua state.
         /// </summary>

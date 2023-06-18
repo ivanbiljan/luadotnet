@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling.Parsers;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling {
-    internal sealed class ObjectMarshal {
+namespace LuaDotNet.Marshalling
+{
+    internal sealed class ObjectMarshal
+    {
         private readonly NetObjectParser _defaultNetObjectParser = new NetObjectParser();
         private readonly LuaContext _lua;
 
-        private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>> {
+        private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
+        {
             [typeof(string)] = () => new StringParser(),
             [typeof(sbyte)] = () => new NumberParser(),
             [typeof(byte)] = () => new NumberParser(),
@@ -26,26 +28,32 @@ namespace LuaDotNet.Marshalling {
             [typeof(Array)] = () => new ArrayParser()
         };
 
-        public ObjectMarshal(LuaContext lua) {
+        public ObjectMarshal(LuaContext lua)
+        {
             _lua = lua ?? throw new ArgumentNullException(nameof(lua));
         }
 
-        public object GetObject(IntPtr state, int stackIndex) {
+        public object GetObject(IntPtr state, int stackIndex)
+        {
             var luaType = LuaModule.Instance.LuaType(state, stackIndex);
             var objectType = typeof(object);
-            switch (luaType) {
+            switch (luaType)
+            {
                 case LuaType.Nil:
                     return null;
                 case LuaType.Boolean:
                     objectType = typeof(bool);
+
                     break;
                 case LuaType.LightUserdata:
                     throw new NotSupportedException();
                 case LuaType.Number:
                     objectType = typeof(long);
+
                     break;
                 case LuaType.String:
                     objectType = typeof(string);
+
                     break;
                 case LuaType.Table:
                     //objectType = typeof(Array); Hmm
@@ -61,53 +69,67 @@ namespace LuaDotNet.Marshalling {
             }
 
             var parser = _typeParsers.GetValueOrDefault(objectType);
-            if (parser == null) {
+            if (parser == null)
+            {
                 return _defaultNetObjectParser.Parse(state, stackIndex);
             }
 
             return parser().Parse(state, stackIndex);
 
-            int GetRegistryReference() {
+            int GetRegistryReference()
+            {
                 LuaModule.Instance.LuaPushValue(state, stackIndex);
-                return LuaModule.Instance.LuaLRef(state, (int) LuaRegistry.RegistryIndex);
+
+                return LuaModule.Instance.LuaLRef(state, (int)LuaRegistry.RegistryIndex);
             }
         }
 
-        public object[] GetObjects(IntPtr state, int startIndex, int endIndex) {
+        public object[] GetObjects(IntPtr state, int startIndex, int endIndex)
+        {
             var numElements = endIndex - startIndex + 1 >= 0 ? endIndex - startIndex + 1 : 0;
             var objs = new object[numElements];
-            for (var i = startIndex; i <= endIndex; ++i) {
+            for (var i = startIndex; i <= endIndex; ++i)
+            {
                 objs[i - startIndex] = GetObject(state, i);
             }
 
             return objs;
         }
 
-        public void PushToStack(IntPtr state, object obj) {
-            switch (obj) {
+        public void PushToStack(IntPtr state, object obj)
+        {
+            switch (obj)
+            {
                 case null:
                     LuaModule.Instance.LuaPushNil(state);
+
                     return;
                 case LuaModule.FunctionSignatures.LuaCFunction luaCFunction:
                     LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
+
                     return;
                 case LuaObject luaObject:
                     luaObject.PushToStack(state);
+
                     return;
             }
 
             var objType = obj.GetType();
             var parser = _typeParsers.GetValueOrDefault(objType);
-            if (parser == null) {
+            if (parser == null)
+            {
                 _defaultNetObjectParser.Push(state, obj);
             }
-            else {
+            else
+            {
                 parser().Push(state, obj);
             }
         }
 
-        public void RegisterTypeParser(Type type, ITypeParser typeParser) {
-            if (typeParser == null) {
+        public void RegisterTypeParser(Type type, ITypeParser typeParser)
+        {
+            if (typeParser == null)
+            {
                 throw new ArgumentNullException(nameof(typeParser));
             }
 

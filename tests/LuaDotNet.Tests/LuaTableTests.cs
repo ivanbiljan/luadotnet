@@ -1,12 +1,16 @@
 ﻿using Xunit;
 
-namespace LuaDotNet.Tests {
-    public class LuaTableTests {
+namespace LuaDotNet.Tests
+{
+    public class LuaTableTests
+    {
         [Theory]
         [InlineData("test", "Hello, World")]
         [InlineData(0, "Indexed value")]
-        public void Add_IsCorrect(object key, object value) {
-            using (var lua = new LuaContext()) {
+        public void Add_IsCorrect(object key, object value)
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table.Add(key, value);
                 Assert.Equal(value, table[key]);
@@ -14,8 +18,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void Clear_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Clear_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table.Add("testkey", "value");
                 table.Add("testkey2", "value2");
@@ -25,8 +31,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void ContainsKey_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void ContainsKey_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table.Add("testkey", "value");
                 Assert.True(table.ContainsKey("testkey"));
@@ -35,8 +43,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void Count_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Count_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
 
                 table.Add("testkey", "value");
@@ -48,8 +58,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void GetSet_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void GetSet_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table["key"] = 1;
                 Assert.Single(table);
@@ -58,8 +70,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void GetSet_NullValue_RemovesKey() {
-            using (var lua = new LuaContext()) {
+        public void GetSet_NullValue_RemovesKey()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table.Add("testkey", "value");
                 table["testkey"] = null;
@@ -68,8 +82,10 @@ namespace LuaDotNet.Tests {
         }
 
         [Fact]
-        public void Remove_IsCorrect() {
-            using (var lua = new LuaContext()) {
+        public void Remove_IsCorrect()
+        {
+            using (var lua = new LuaContext())
+            {
                 var table = lua.CreateTable();
                 table.Add("testkey", 1);
                 table.Add("testkey2", 2);

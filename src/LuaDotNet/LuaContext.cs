@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using JetBrains.Annotations;
@@ -14,27 +11,34 @@ using LuaDotNet.Marshalling;
 using LuaDotNet.Marshalling.Parsers;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet {
+namespace LuaDotNet
+{
     /// <summary>
     ///     Represents an independent Lua context.
     /// </summary>
     [PublicAPI]
-    public sealed class LuaContext : IDisposable {
+    public sealed class LuaContext : IDisposable
+    {
         private readonly ObjectMarshal _objectMarshal;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="LuaContext" /> class.
         /// </summary>
-        public LuaContext(bool openLibs = true) {
+        public LuaContext(bool openLibs = true)
+        {
             State = LuaModule.Instance.LuaLNewState();
-            if (openLibs) {
+            if (openLibs)
+            {
                 LuaModule.Instance.LuaLOpenLibs(State);
             }
 
             ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
             Metamethods.CreateMetatables(State);
 
-            RegisterFunction("importType", typeof(LuaContext).GetMethod("ImportType", BindingFlags.Public | BindingFlags.Instance), this);
+            RegisterFunction(
+                "importType",
+                typeof(LuaContext).GetMethod("ImportType", BindingFlags.Public | BindingFlags.Instance),
+                this);
 //            RegisterFunction("loadAssembly", typeof(LuaContext).GetMethod("LoadAssembly", BindingFlags.NonPublic | BindingFlags.Instance),
 //                this);
 
@@ -65,7 +69,8 @@ namespace LuaDotNet {
         public IntPtr State { get; }
 
         /// <inheritdoc />
-        public void Dispose() {
+        public void Dispose()
+        {
             ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
         }
@@ -73,7 +78,8 @@ namespace LuaDotNet {
         /// <summary>
         ///     The finalizer.
         /// </summary>
-        ~LuaContext() {
+        ~LuaContext()
+        {
             ReleaseUnmanagedResources();
         }
 
@@ -83,8 +89,10 @@ namespace LuaDotNet {
         /// <param name="luaFunction">The Lua function which the coroutine will execute, which must not be <c>null</c>.</param>
         /// <returns>The coroutine.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="luaFunction" /> is <c>null</c>.</exception>
-        public LuaCoroutine CreateCoroutine([NotNull] LuaFunction luaFunction) {
-            if (luaFunction == null) {
+        public LuaCoroutine CreateCoroutine([NotNull] LuaFunction luaFunction)
+        {
+            if (luaFunction == null)
+            {
                 throw new ArgumentNullException(nameof(luaFunction));
             }
 
@@ -92,8 +100,9 @@ namespace LuaDotNet {
             var statePointer = LuaModule.Instance.LuaNewThread(State);
             luaFunction.PushToStack(State);
             LuaModule.Instance.LuaXMove(State, statePointer, 1);
-            var coroutine = (LuaCoroutine) objectMarshal.GetObject(State, -1);
+            var coroutine = (LuaCoroutine)objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
+
             return coroutine;
         }
 
@@ -103,11 +112,13 @@ namespace LuaDotNet {
         /// <param name="delegate">The delegate, which must not be <c>null</c>.</param>
         /// <returns>The function.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="delegate" /> is <c>null</c>.</exception>
-        public LuaFunction CreateFunction([NotNull] Delegate @delegate) {
-            if (@delegate == null) {
+        public LuaFunction CreateFunction([NotNull] Delegate @delegate)
+        {
+            if (@delegate == null)
+            {
                 throw new ArgumentNullException(nameof(@delegate));
             }
-            
+
             return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
         }
 
@@ -118,8 +129,10 @@ namespace LuaDotNet {
         /// <param name="target">The class instance on which the method is invoked.</param>
         /// <returns>The function.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="methodInfo" /> is <c>null</c>.</exception>
-        public LuaFunction CreateFunction([NotNull] MethodInfo methodInfo, object target = null) {
-            if (methodInfo == null) {
+        public LuaFunction CreateFunction([NotNull] MethodInfo methodInfo, object target = null)
+        {
+            if (methodInfo == null)
+            {
                 throw new ArgumentNullException(nameof(methodInfo));
             }
 
@@ -175,14 +188,53 @@ namespace LuaDotNet {
         /// <param name="numberOfSeqElements">The number of sequential elements.</param>
         /// <param name="numberOfOtherElements">The number of other elements.</param>
         /// <returns>The table.</returns>
-        public LuaTable CreateTable(int numberOfSeqElements = 0, int numberOfOtherElements = 0) {
+        public LuaTable CreateTable(int numberOfSeqElements = 0, int numberOfOtherElements = 0)
+        {
             numberOfSeqElements = Math.Max(0, numberOfSeqElements);
             numberOfOtherElements = Math.Max(0, numberOfOtherElements);
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
             LuaModule.Instance.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
-            var table = (LuaTable) objectMarshal.GetObject(State, -1);
+            var table = (LuaTable)objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
+
             return table;
+        }
+
+        /// <summary>
+        ///     Loads the given Lua file and runs it.
+        /// </summary>
+        /// <param name="file">The Lua file.</param>
+        /// <param name="numberOfResults">The number of results to return.</param>
+        /// <returns>The results.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="file" /> is <c>null</c>.</exception>
+        /// <exception cref="FileNotFoundException"><paramref name="file" /> is invalid or not a .lua file.</exception>
+        /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
+        public object[] DoFile([NotNull] string file, int numberOfResults = LuaModule.LuaMultRet)
+        {
+            if (file == null)
+            {
+                throw new ArgumentNullException(nameof(file));
+            }
+
+            if (!File.Exists(file) ||
+                !Path.GetExtension(file).Equals(".lua", StringComparison.InvariantCultureIgnoreCase))
+            {
+                throw new FileNotFoundException();
+            }
+
+            var errorCode = LuaModule.Instance.LuaLLoadString(
+                State,
+                File.ReadAllText(file).GetEncodedString(Encoding.UTF8));
+            if (errorCode == LuaErrorCode.LuaOk)
+            {
+                return LuaModule.Instance.PCallKInternal(State, null, numberOfResults);
+            }
+
+            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
+            var errorMessage = (string)objectMarshal.GetObject(State, -1);
+            LuaModule.Instance.LuaPop(State, 1);
+
+            throw new LuaException($"[{errorCode}]: {errorMessage}");
         }
 
         /// <summary>
@@ -192,67 +244,86 @@ namespace LuaDotNet {
         /// <param name="numberOfResults">The number of results to return.</param>
         /// <returns>The chunk's results.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
-        public object[] DoString([NotNull] string luaChunk, int numberOfResults = LuaModule.LuaMultRet) {
-            if (luaChunk == null) {
+        public object[] DoString([NotNull] string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
+        {
+            if (luaChunk == null)
+            {
                 throw new ArgumentNullException(nameof(luaChunk));
             }
 
             var errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
-            if (errorCode == LuaErrorCode.LuaOk) {
+            if (errorCode == LuaErrorCode.LuaOk)
+            {
                 return LuaModule.Instance.PCallKInternal(State, numberOfResults: numberOfResults);
             }
 
             // Lua pushes an error message in case of errors
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            var errorMessage = (string) objectMarshal.GetObject(State, -1);
+            var errorMessage = (string)objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
+
             throw new LuaException($"[{errorCode}]: {errorMessage}");
         }
 
-        /// <summary>
-        /// Loads the given Lua file and runs it.
-        /// </summary>
-        /// <param name="file">The Lua file.</param>
-        /// <param name="numberOfResults">The number of results to return.</param>
-        /// <returns>The results.</returns>
-        /// <exception cref="ArgumentNullException"><paramref name="file"/> is <c>null</c>.</exception>
-        /// <exception cref="FileNotFoundException"><paramref name="file"/> is invalid or not a .lua file.</exception>
-        /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
-        public object[] DoFile([NotNull] string file, int numberOfResults = LuaModule.LuaMultRet) {
-            if (file == null) {
-                throw new ArgumentNullException(nameof(file));
-            }
-
-            if (!File.Exists(file) || !Path.GetExtension(file).Equals(".lua", StringComparison.InvariantCultureIgnoreCase)) {
-                throw new FileNotFoundException();
-            }
-
-            var errorCode = LuaModule.Instance.LuaLLoadString(State, File.ReadAllText(file).GetEncodedString(Encoding.UTF8));
-            if (errorCode == LuaErrorCode.LuaOk) {
-                return LuaModule.Instance.PCallKInternal(State, null, numberOfResults);
-            }
-            
-            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            var errorMessage = (string) objectMarshal.GetObject(State, -1);
-            LuaModule.Instance.LuaPop(State, 1);
-            throw new LuaException($"[{errorCode}]: {errorMessage}");
-        }
-        
         /// <summary>
         ///     Returns the value of a global variable with the specified name.
         /// </summary>
         /// <param name="name">The name, which must not be <c>null</c>.</param>
         /// <returns>The value.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
-        public object GetGlobal([NotNull] string name) {
-            if (name == null) {
+        public object GetGlobal([NotNull] string name)
+        {
+            if (name == null)
+            {
                 throw new ArgumentNullException(nameof(name));
             }
 
             LuaModule.Instance.LuaGetGlobal(State, name);
             var obj = ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
+
             return obj;
+        }
+
+        public void ImportType(string typeName)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic))
+            {
+                foreach (var type in assembly.GetExportedTypes())
+                {
+                    if (type.Name != typeName && type.FullName != typeName)
+                    {
+                        continue;
+                    }
+
+                    if (type.GetCustomAttribute<LuaHideAttribute>() != null)
+                    {
+                        continue;
+                    }
+
+                    SetGlobal(type.Name, type);
+                    Console.WriteLine(type.Name);
+                }
+            }
+        }
+
+        public void LoadAssembly(string name)
+        {
+            Assembly assembly = null;
+
+            try
+            {
+                assembly = Assembly.LoadFrom(name);
+            }
+            catch (FileNotFoundException)
+            {
+                // Swallow the exception and attempt to resolve the assembly using the AssemblyName
+            }
+
+            if (assembly == null)
+            {
+                Assembly.Load(AssemblyName.GetAssemblyName(name));
+            }
         }
 
         /// <summary>
@@ -262,20 +333,25 @@ namespace LuaDotNet {
         /// <returns>A reusable Lua function.</returns>
         /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
         /// <exception cref="LuaException">Something went wrong while loading the chunk.</exception>
-        public LuaFunction LoadString([NotNull] string luaChunk) {
-            if (luaChunk == null) {
+        public LuaFunction LoadString([NotNull] string luaChunk)
+        {
+            if (luaChunk == null)
+            {
                 throw new ArgumentNullException(nameof(luaChunk));
             }
 
             var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-            if (LuaModule.Instance.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk) {
-                var errorMessage = (string) objectMarshal.GetObject(State, -1);
+            if (LuaModule.Instance.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
+            {
+                var errorMessage = (string)objectMarshal.GetObject(State, -1);
                 LuaModule.Instance.LuaPop(State, 1);
+
                 throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
             }
 
-            var function = (LuaFunction) objectMarshal.GetObject(State, -1);
+            var function = (LuaFunction)objectMarshal.GetObject(State, -1);
             LuaModule.Instance.LuaPop(State, 1);
+
             return function;
         }
 
@@ -286,12 +362,15 @@ namespace LuaDotNet {
         /// <param name="method">The method, which must not be <c>null</c>.</param>
         /// <param name="target">The instance on which to invoke the method.</param>
         /// <exception cref="ArgumentNullException"><paramref name="path" /> or <paramref name="method" /> is <c>null</c>.</exception>
-        public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target) {
-            if (path == null) {
+        public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target)
+        {
+            if (path == null)
+            {
                 throw new ArgumentNullException(nameof(path));
             }
 
-            if (method == null) {
+            if (method == null)
+            {
                 throw new ArgumentNullException(nameof(method));
             }
 
@@ -315,8 +394,10 @@ namespace LuaDotNet {
         /// <param name="name">The name, which must not be <c>null</c>.</param>
         /// <param name="value">The value.</param>
         /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
-        public void SetGlobal([NotNull] string name, object value) {
-            if (name == null) {
+        public void SetGlobal([NotNull] string name, object value)
+        {
+            if (name == null)
+            {
                 throw new ArgumentNullException(nameof(name));
             }
 
@@ -324,39 +405,8 @@ namespace LuaDotNet {
             LuaModule.Instance.LuaSetGlobal(State, name);
         }
 
-        public void ImportType(string typeName) {
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.IsDynamic)) {
-                foreach (var type in assembly.GetExportedTypes()) {
-                    if (type.Name != typeName && type.FullName != typeName) {
-                        continue;
-                    }
-
-                    if (type.GetCustomAttribute<LuaHideAttribute>() != null) {
-                        continue;
-                    }
-
-                    SetGlobal(type.Name, type);
-                    Console.WriteLine(type.Name);
-                }
-            }
-        }
-
-        public void LoadAssembly(string name) {
-            Assembly assembly = null;
-
-            try {
-                assembly = Assembly.LoadFrom(name);
-            }
-            catch (FileNotFoundException) {
-                // Swallow the exception and attempt to resolve the assembly using the AssemblyName
-            }
-
-            if (assembly == null) {
-                Assembly.Load(AssemblyName.GetAssemblyName(name));
-            }
-        }
-
-        private void ReleaseUnmanagedResources() {
+        private void ReleaseUnmanagedResources()
+        {
             LuaModule.Instance.LuaClose(State);
         }
     }

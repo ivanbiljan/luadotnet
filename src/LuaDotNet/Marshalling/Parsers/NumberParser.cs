@@ -2,23 +2,30 @@
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling.Parsers {
-    public sealed class NumberParser : ITypeParser {
-        public object Parse(IntPtr state, int stackIndex) {
-            if (LuaModule.Instance.LuaIsInteger(state, stackIndex)) {
+namespace LuaDotNet.Marshalling.Parsers
+{
+    public sealed class NumberParser : ITypeParser
+    {
+        public object Parse(IntPtr state, int stackIndex)
+        {
+            if (LuaModule.Instance.LuaIsInteger(state, stackIndex))
+            {
                 return LuaModule.Instance.LuaToIntegerX(state, stackIndex, out _);
             }
 
             return LuaModule.Instance.LuaToNumberX(state, stackIndex, out _);
         }
 
-        public void Push(IntPtr state, object obj) {
-            if (obj.GetType().IsInteger()) {
-                LuaModule.Instance.LuaPushInteger(state, (long) Convert.ChangeType(obj, typeof(long)));
+        public void Push(IntPtr state, object obj)
+        {
+            if (obj.GetType().IsInteger())
+            {
+                LuaModule.Instance.LuaPushInteger(state, (long)Convert.ChangeType(obj, typeof(long)));
+
                 return;
             }
 
-            LuaModule.Instance.LuaPushNumber(state, (double) Convert.ChangeType(obj, typeof(double)));
+            LuaModule.Instance.LuaPushNumber(state, (double)Convert.ChangeType(obj, typeof(double)));
         }
     }
 }

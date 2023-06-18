@@ -1,11 +1,13 @@
 ﻿using JetBrains.Annotations;
 
-namespace LuaDotNet.PInvoke.LuaEvents {
+namespace LuaDotNet.PInvoke.LuaEvents
+{
     /// <summary>
     ///     Specifies the event code of a Lua event. These values are constants pulled from the lua.h file.
     /// </summary>
     [PublicAPI]
-    public enum LuaEventCode {
+    public enum LuaEventCode
+    {
         /// <summary>
         ///     The call event code. Used when Lua calls a function.
         /// </summary>

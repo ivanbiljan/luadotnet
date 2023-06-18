@@ -3,24 +3,33 @@ using JetBrains.Annotations;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet {
+namespace LuaDotNet
+{
     /// <summary>
     ///     Represents a managed, reusable Lua function.
     /// </summary>
     [PublicAPI]
-    public sealed class LuaFunction : LuaObject {
+    public sealed class LuaFunction : LuaObject
+    {
         private readonly LuaModule.FunctionSignatures.LuaCFunction _luaCFunction;
 
-        internal LuaFunction(LuaContext lua, int reference) : base(lua, reference) {
+        internal LuaFunction(LuaContext lua, int reference) : base(lua, reference)
+        {
         }
 
-        internal LuaFunction(LuaContext lua, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) : base(lua, LuaModule.LuaNoRef) {
+        internal LuaFunction(LuaContext lua, LuaModule.FunctionSignatures.LuaCFunction luaCFunction) : base(
+            lua,
+            LuaModule.LuaNoRef)
+        {
             _luaCFunction = luaCFunction ?? throw new ArgumentNullException(nameof(luaCFunction));
         }
 
-        internal override void PushToStack(IntPtr state) {
-            if (Reference == LuaModule.LuaNoRef) {
+        internal override void PushToStack(IntPtr state)
+        {
+            if (Reference == LuaModule.LuaNoRef)
+            {
                 LuaModule.Instance.LuaPushCClosure(state, _luaCFunction, 0);
+
                 return;
             }
 
@@ -32,8 +41,10 @@ namespace LuaDotNet {
         /// </summary>
         /// <param name="arguments">The arguments.</param>
         /// <returns>The invocation's results.</returns>
-        public object[] Call(params object[] arguments) {
+        public object[] Call(params object[] arguments)
+        {
             ObjectMarshalPool.GetMarshal(Lua.State).PushToStack(Lua.State, this);
+
             return LuaModule.Instance.PCallKInternal(Lua.State, arguments);
         }
     }

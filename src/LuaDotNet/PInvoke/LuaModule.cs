@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -16,8 +14,10 @@ using NLdr.Framework;
 using LuaInteger = System.Int64; // Just to avoid improper marshalling
 #pragma warning disable 649
 
-namespace LuaDotNet.PInvoke {
-    internal sealed class LuaModule : NativeLibrary {
+namespace LuaDotNet.PInvoke
+{
+    internal sealed class LuaModule : NativeLibrary
+    {
         public const int LuaMultRet = -1;
         public const int LuaNoRef = -2;
         public const int LuaRefNil = -1;
@@ -66,23 +66,27 @@ namespace LuaDotNet.PInvoke {
         public FunctionSignatures.LuaTypeD LuaType;
         public FunctionSignatures.LuaXMove LuaXMove;
 
-        static LuaModule() {
+        static LuaModule()
+        {
             var architecture = IntPtr.Size == 8 ? "x64" : "x86";
             var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "liblua53.so" : "lua53.dll";
             var path = Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime);
-            if (!File.Exists(path)) {
+            if (!File.Exists(path))
+            {
                 throw new FileNotFoundException(path);
             }
-            
+
             Instance.Load(path);
         }
 
         public static LuaModule Instance { get; } = new LuaModule();
 
-        public IntPtr GetMainThreadPointer(IntPtr state) {
-            LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, (long) LuaRegistry.MainThreadIndex);
+        public IntPtr GetMainThreadPointer(IntPtr state)
+        {
+            LuaRawGetI(state, (int)LuaRegistry.RegistryIndex, (long)LuaRegistry.MainThreadIndex);
             var mainThreadPointer = LuaToPointer(state, -1);
             LuaPop(state, 1);
+
             return mainThreadPointer;
         }
 
@@ -98,50 +102,65 @@ namespace LuaDotNet.PInvoke {
 
         public void LuaPop(IntPtr state, int numberOfElements) => LuaSetTop(state, -numberOfElements - 1);
 
-        public void LuaPushLString(IntPtr state, string str) {
+        public void LuaPushLString(IntPtr state, string str)
+        {
             // UTF-8 is the encoding Lua uses. Possible TODO: Support multiple encodings like NLua does?
             var encodedString = str.GetEncodedString(Encoding.UTF8);
-            LuaPushLStringDelegate(state, encodedString, new UIntPtr((uint) encodedString.Length));
+            LuaPushLStringDelegate(state, encodedString, new UIntPtr((uint)encodedString.Length));
         }
 
-        public void PushNetObjAsUserdata(IntPtr state, object obj) {
-            var userdataPointer = LuaNewUserdata(state, new UIntPtr((uint) IntPtr.Size));
+        public void PushNetObjAsUserdata(IntPtr state, object obj)
+        {
+            var userdataPointer = LuaNewUserdata(state, new UIntPtr((uint)IntPtr.Size));
             Marshal.WriteIntPtr(userdataPointer, GCHandle.ToIntPtr(GCHandle.Alloc(obj)));
         }
 
-        public object UserdataToNetObject(IntPtr state, int stackIndex) {
+        public object UserdataToNetObject(IntPtr state, int stackIndex)
+        {
             var userdataPointer = LuaToUserdata(state, stackIndex);
+
             return GCHandle.FromIntPtr(Marshal.ReadIntPtr(userdataPointer)).Target;
         }
 
-        internal object[] PCallKInternal(IntPtr state, IReadOnlyCollection<object> arguments = null, int numberOfResults = LuaMultRet) {
+        internal object[] PCallKInternal(
+            IntPtr state,
+            IReadOnlyCollection<object> arguments = null,
+            int numberOfResults = LuaMultRet)
+        {
             // The function (which is currently at the top of the stack) gets popped along with the arguments when it's called
             var objectMarshal = ObjectMarshalPool.GetMarshal(state);
             var stackTop = LuaGetTop(state) - 1;
 
             // The function is already on the stack so the only thing left to do is push the arguments in direct order
-            if (arguments != null) {
-                foreach (var argument in arguments) {
+            if (arguments != null)
+            {
+                foreach (var argument in arguments)
+                {
                     objectMarshal.PushToStack(state, argument);
                 }
             }
 
             // Adjust the number of results to avoid errors
             var errorCode = LuaPCallK(state, arguments?.Count ?? 0, Math.Max(numberOfResults, -1));
-            if (errorCode != LuaErrorCode.LuaOk) {
+            if (errorCode != LuaErrorCode.LuaOk)
+            {
                 // Lua pushes an error message in case of errors
-                var errorMessage = (string) objectMarshal.GetObject(state, -1);
+                var errorMessage = (string)objectMarshal.GetObject(state, -1);
                 LuaPop(state, 1);
-                throw new LuaException($"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
+
+                throw new LuaException(
+                    $"An exception has occured while calling a function: [{errorCode}]: {errorMessage}");
             }
 
             var results = objectMarshal.GetObjects(state, stackTop + 1, Instance.LuaGetTop(state));
             LuaSetTop(state, stackTop);
+
             return results;
         }
 
         [SuppressMessage("ReSharper", "BuiltInTypeReferenceStyle")]
-        internal static class FunctionSignatures {
+        internal static class FunctionSignatures
+        {
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             public delegate int LuaCFunction(IntPtr luaState);
@@ -159,7 +178,9 @@ namespace LuaDotNet.PInvoke {
             [UnmanagedFunction("lua_createtable")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate void LuaCreateTable(IntPtr luaState, int numberOfSequentialElements,
+            public delegate void LuaCreateTable(
+                IntPtr luaState,
+                int numberOfSequentialElements,
                 int numberOfOtherElements);
 
             [UnmanagedFunction("lua_getfield")]
@@ -235,10 +256,13 @@ namespace LuaDotNet.PInvoke {
             [UnmanagedFunction("lua_pcallk")]
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-            public delegate LuaErrorCode LuaPCallK(IntPtr luaState, int numberOfArguments,
+            public delegate LuaErrorCode LuaPCallK(
+                IntPtr luaState,
+                int numberOfArguments,
                 int numberOfResults = LuaMultRet,
-                int messageHandler = 0, IntPtr context = default(IntPtr),
-                IntPtr continuationFunction = default(IntPtr));
+                int messageHandler = 0,
+                IntPtr context = default,
+                IntPtr continuationFunction = default);
 
             [UnmanagedFunction("lua_pushboolean")]
             [SuppressUnmanagedCodeSecurity]
@@ -294,7 +318,11 @@ namespace LuaDotNet.PInvoke {
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
             [return: MarshalAs(UnmanagedType.I4)]
-            public delegate LuaErrorCode LuaResume(IntPtr coroutineState, IntPtr fromCoroutineState, int nargs, out int nresults);
+            public delegate LuaErrorCode LuaResume(
+                IntPtr coroutineState,
+                IntPtr fromCoroutineState,
+                int nargs,
+                out int nresults);
 
             [UnmanagedFunction("lua_setglobal")]
             [SuppressUnmanagedCodeSecurity]

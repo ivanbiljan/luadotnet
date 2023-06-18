@@ -1,15 +1,19 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace LuaDotNet.Marshalling {
-    internal sealed class LuaEventHandler<TEventArgs> where TEventArgs : EventArgs {
+namespace LuaDotNet.Marshalling
+{
+    internal sealed class LuaEventHandler<TEventArgs> where TEventArgs : EventArgs
+    {
         private readonly LuaFunction _luaFunction;
 
-        public LuaEventHandler([NotNull] LuaFunction luaFunction) {
+        public LuaEventHandler([NotNull] LuaFunction luaFunction)
+        {
             _luaFunction = luaFunction ?? throw new ArgumentNullException(nameof(luaFunction));
         }
 
-        public void HandleEvent(object sender, TEventArgs args) {
+        public void HandleEvent(object sender, TEventArgs args)
+        {
             _luaFunction.Call(sender, args);
         }
     }

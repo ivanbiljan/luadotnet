@@ -1,13 +1,15 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace LuaDotNet.PInvoke.LuaEvents {
+namespace LuaDotNet.PInvoke.LuaEvents
+{
     /// <summary>
     ///     Specifies the hook mask of a Lua event. These values are constants pulled from the lua.h file.
     /// </summary>
     [Flags]
     [PublicAPI]
-    public enum LuaEventMask {
+    public enum LuaEventMask
+    {
         /// <summary>
         ///     The hook is called when Lua calls a function, right before the function gets its arguments.
         /// </summary>

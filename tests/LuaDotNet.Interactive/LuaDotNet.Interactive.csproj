@@ -6,16 +6,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\LuaDotNet\LuaDotNet.csproj" />
+        <ProjectReference Include="..\..\src\LuaDotNet\LuaDotNet.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="scripts\account.lua">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="scripts\unitconversion.lua">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+        <None Update="scripts\account.lua">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="scripts\unitconversion.lua">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
 
 </Project>
