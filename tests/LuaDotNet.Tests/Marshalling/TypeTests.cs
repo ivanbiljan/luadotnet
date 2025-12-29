@@ -2,84 +2,85 @@
 using LuaDotNet.Extensions;
 using Xunit;
 
-namespace LuaDotNet.Tests.Marshalling
+namespace LuaDotNet.Tests.Marshalling;
+
+public sealed class TypeTests
 {
-    public sealed class TypeTests
+    [Theory]
+    [InlineData("test string")]
+    public void CallStaticMethod_WithArgs_IsCorrect(string arg)
     {
-        private class TestClass
+        using (var lua = new LuaContext())
         {
-            public static string StaticProperty { get; } = nameof(StaticProperty);
-
-            public static string StaticMethod(string what = null) =>
-                what.IsNullOrWhitespace() ? nameof(StaticMethod) : what;
+            lua.SetGlobal("TestClass", typeof(TestClass));
+            Assert.Equal(arg, lua.DoString($"return TestClass.StaticMethod('{arg}')")[0]);
         }
+    }
 
-        [Theory]
-        [InlineData("test string")]
-        public void CallStaticMethod_WithArgs_IsCorrect(string arg)
+    [Fact]
+    public void CallStaticMethod_NoArgs_IsCorrect()
+    {
+        using (var lua = new LuaContext())
         {
-            using (var lua = new LuaContext())
-            {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Equal(arg, lua.DoString($"return TestClass.StaticMethod('{arg}')")[0]);
-            }
+            lua.SetGlobal("TestClass", typeof(TestClass));
+
+            Assert.Equal(nameof(TestClass.StaticMethod), lua.DoString("return TestClass.StaticMethod()")[0]);
         }
+    }
 
-        [Fact]
-        public void CallStaticMethod_NoArgs_IsCorrect()
+    [Fact]
+    public void ImportType_IsCorrect()
+    {
+        using (var lua = new LuaContext())
         {
-            using (var lua = new LuaContext())
-            {
-                lua.SetGlobal("TestClass", typeof(TestClass));
+            lua.DoString("importType('Int32')");
 
-                Assert.Equal(nameof(TestClass.StaticMethod), lua.DoString("return TestClass.StaticMethod()")[0]);
-            }
+            lua.DoString("success, result = Int32.TryParse('10')");
+
+            Assert.True((bool) lua.GetGlobal("success"));
+            Assert.Equal(10L, lua.GetGlobal("result"));
         }
+    }
 
-        [Fact]
-        public void ImportType_IsCorrect()
+    [Fact]
+    public void IndexType_InvalidMember_ThrowsLuaException()
+    {
+        using (var lua = new LuaContext())
         {
-            using (var lua = new LuaContext())
-            {
-                lua.DoString("importType('Int32')");
+            lua.SetGlobal("TestClass", typeof(TestClass));
 
-                lua.DoString("success, result = Int32.TryParse('10')");
-
-                Assert.True((bool)lua.GetGlobal("success"));
-                Assert.Equal(10L, lua.GetGlobal("result"));
-            }
+            Assert.Throws<LuaException>(() => lua.DoString("return TestClass.ThisPropertyDoesNotExist"));
         }
+    }
 
-        [Fact]
-        public void IndexType_InvalidMember_ThrowsLuaException()
+    [Fact]
+    public void IndexType_IsCorrect()
+    {
+        using (var lua = new LuaContext())
         {
-            using (var lua = new LuaContext())
-            {
-                lua.SetGlobal("TestClass", typeof(TestClass));
+            lua.SetGlobal("TestClass", typeof(TestClass));
 
-                Assert.Throws<LuaException>(() => lua.DoString("return TestClass.ThisPropertyDoesNotExist"));
-            }
+            Assert.Equal(nameof(TestClass.StaticProperty), lua.DoString("return TestClass.StaticProperty")[0]);
         }
+    }
 
-        [Fact]
-        public void IndexType_IsCorrect()
+    [Fact]
+    public void IndexType_NonStringMember_ThrowsLuaException()
+    {
+        using (var lua = new LuaContext())
         {
-            using (var lua = new LuaContext())
-            {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-
-                Assert.Equal(nameof(TestClass.StaticProperty), lua.DoString("return TestClass.StaticProperty")[0]);
-            }
+            lua.SetGlobal("TestClass", typeof(TestClass));
+            Assert.Throws<LuaException>(() => lua.DoString("TestClass.2"));
         }
+    }
 
-        [Fact]
-        public void IndexType_NonStringMember_ThrowsLuaException()
+    private class TestClass
+    {
+        public static string StaticProperty { get; } = nameof(StaticProperty);
+
+        public static string StaticMethod(string what = null)
         {
-            using (var lua = new LuaContext())
-            {
-                lua.SetGlobal("TestClass", typeof(TestClass));
-                Assert.Throws<LuaException>(() => lua.DoString("TestClass.2"));
-            }
+            return what.IsNullOrWhitespace() ? nameof(StaticMethod) : what;
         }
     }
 }

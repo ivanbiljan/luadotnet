@@ -1,28 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 
-namespace LuaDotNet.Marshalling
+namespace LuaDotNet.Marshalling;
+
+internal static class ObjectMarshalPool
 {
-    internal static class ObjectMarshalPool
+    private static readonly Dictionary<IntPtr, ObjectMarshal> Marshals = new();
+
+    public static void AddMarshal(LuaContext lua, ObjectMarshal objectMarshal)
     {
-        private static readonly Dictionary<IntPtr, ObjectMarshal> Marshals = new Dictionary<IntPtr, ObjectMarshal>();
+        // Each context gets its own ObjectMarshal
+        Marshals[lua.State] = objectMarshal;
+    }
 
-        public static void AddMarshal(LuaContext lua, ObjectMarshal objectMarshal)
+    public static ObjectMarshal GetMarshal(IntPtr state)
+    {
+        if (Marshals.TryGetValue(state, out var marshal))
         {
-            // Each context gets its own ObjectMarshal
-            Marshals[lua.State] = objectMarshal;
+            return marshal;
         }
 
-        public static ObjectMarshal GetMarshal(IntPtr state)
-        {
-            if (Marshals.TryGetValue(state, out var marshal))
-            {
-                return marshal;
-            }
-
-            return Marshals.GetValueOrDefault(LuaModule.Instance.GetMainThreadPointer(state));
-        }
+        return Marshals.GetValueOrDefault(LuaModule.Instance.GetMainThreadPointer(state));
     }
 }
