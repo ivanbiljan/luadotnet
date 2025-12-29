@@ -19,10 +19,4 @@
         </None>
     </ItemGroup>
 
-    <ItemGroup>
-        <Reference Include="NLdr">
-            <HintPath>..\..\refs\NLdr.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
 </Project>
