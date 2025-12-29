@@ -410,6 +410,7 @@ public sealed class LuaContext : IDisposable
 
     private void ReleaseUnmanagedResources()
     {
+        ObjectMarshalPool.Remove(State);
         Lua.LuaClose(State);
     }
 }

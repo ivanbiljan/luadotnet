@@ -23,4 +23,9 @@ internal static class ObjectMarshalPool
 
         return Marshals.GetValueOrDefault(Lua.GetMainThreadPointer(state));
     }
+
+    public static void Remove(IntPtr state)
+    {
+        Marshals.Remove(state);
+    }
 }
