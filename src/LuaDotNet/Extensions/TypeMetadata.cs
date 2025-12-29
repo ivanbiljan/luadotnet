@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using LuaDotNet.Attributes;
 
 namespace LuaDotNet.Extensions;
@@ -10,7 +9,6 @@ namespace LuaDotNet.Extensions;
 /// <summary>
 ///     Provides type metadata. Acts as a wrapper around a <see cref="Type" /> object and filters out unnecessary members.
 /// </summary>
-[PublicAPI]
 public sealed class TypeMetadata
 {
     private IList<ConstructorInfo> _constructors;

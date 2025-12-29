@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using JetBrains.Annotations;
 using LuaDotNet.PInvoke.LuaEvents;
 
 namespace LuaDotNet.PInvoke;
@@ -8,7 +7,6 @@ namespace LuaDotNet.PInvoke;
 /// <summary>
 ///     Represents the lua_Debug struct which is marshaled to and from unmanaged code when calling events.
 /// </summary>
-[PublicAPI]
 [StructLayout(LayoutKind.Sequential)]
 public struct LuaDebug
 {

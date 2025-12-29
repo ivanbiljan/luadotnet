@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using JetBrains.Annotations;
 using LuaDotNet.Extensions;
 
 namespace LuaDotNet;
 
 internal static class Utils
 {
-    [UsedImplicitly]
     public static object CoerceObjectMaybe(object obj, Type type)
     {
         return TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;

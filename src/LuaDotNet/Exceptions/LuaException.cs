@@ -1,12 +1,10 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace LuaDotNet.Exceptions;
 
 /// <summary>
 ///     Represents a Lua exception.
 /// </summary>
-[PublicAPI]
 [Serializable]
 public sealed class LuaException : Exception
 {

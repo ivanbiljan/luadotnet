@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
@@ -9,7 +8,6 @@ namespace LuaDotNet;
 /// <summary>
 ///     Specifies the status of a Lua coroutine.
 /// </summary>
-[PublicAPI]
 public enum CoroutineStatus
 {
     /// <summary>
@@ -36,7 +34,6 @@ public enum CoroutineStatus
 /// <summary>
 ///     Represents a Lua coroutine.
 /// </summary>
-[PublicAPI]
 public sealed class LuaCoroutine : LuaObject
 {
     /// <inheritdoc />

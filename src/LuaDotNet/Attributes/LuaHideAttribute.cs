@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace LuaDotNet.Attributes;
 
@@ -13,7 +12,6 @@ namespace LuaDotNet.Attributes;
     AttributeTargets.Method |
     AttributeTargets.Property
 )]
-[PublicAPI]
 public sealed class LuaHideAttribute : Attribute
 {
 }

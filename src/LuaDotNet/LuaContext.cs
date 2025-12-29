@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using JetBrains.Annotations;
 using LuaDotNet.Attributes;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
@@ -16,7 +15,6 @@ namespace LuaDotNet;
 /// <summary>
 ///     Represents an independent Lua context.
 /// </summary>
-[PublicAPI]
 public sealed class LuaContext : IDisposable
 {
     private readonly ObjectMarshal _objectMarshal;
@@ -90,7 +88,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="luaFunction">The Lua function which the coroutine will execute, which must not be <c>null</c>.</param>
     /// <returns>The coroutine.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="luaFunction" /> is <c>null</c>.</exception>
-    public LuaCoroutine CreateCoroutine([NotNull] LuaFunction luaFunction)
+    public LuaCoroutine CreateCoroutine(LuaFunction luaFunction)
     {
         if (luaFunction == null)
         {
@@ -113,7 +111,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="delegate">The delegate, which must not be <c>null</c>.</param>
     /// <returns>The function.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="delegate" /> is <c>null</c>.</exception>
-    public LuaFunction CreateFunction([NotNull] Delegate @delegate)
+    public LuaFunction CreateFunction(Delegate @delegate)
     {
         if (@delegate == null)
         {
@@ -130,7 +128,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="target">The class instance on which the method is invoked.</param>
     /// <returns>The function.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="methodInfo" /> is <c>null</c>.</exception>
-    public LuaFunction CreateFunction([NotNull] MethodInfo methodInfo, object target = null)
+    public LuaFunction CreateFunction(MethodInfo methodInfo, object target = null)
     {
         if (methodInfo == null)
         {
@@ -210,7 +208,7 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="file" /> is <c>null</c>.</exception>
     /// <exception cref="FileNotFoundException"><paramref name="file" /> is invalid or not a .lua file.</exception>
     /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
-    public object[] DoFile([NotNull] string file, int numberOfResults = LuaModule.LuaMultRet)
+    public object[] DoFile(string file, int numberOfResults = LuaModule.LuaMultRet)
     {
         if (file == null)
         {
@@ -247,7 +245,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="numberOfResults">The number of results to return.</param>
     /// <returns>The chunk's results.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
-    public object[] DoString([NotNull] string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
+    public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
     {
         if (luaChunk == null)
         {
@@ -274,7 +272,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="name">The name, which must not be <c>null</c>.</param>
     /// <returns>The value.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
-    public object GetGlobal([NotNull] string name)
+    public object GetGlobal(string name)
     {
         if (name == null)
         {
@@ -336,7 +334,7 @@ public sealed class LuaContext : IDisposable
     /// <returns>A reusable Lua function.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
     /// <exception cref="LuaException">Something went wrong while loading the chunk.</exception>
-    public LuaFunction LoadString([NotNull] string luaChunk)
+    public LuaFunction LoadString(string luaChunk)
     {
         if (luaChunk == null)
         {
@@ -365,7 +363,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="method">The method, which must not be <c>null</c>.</param>
     /// <param name="target">The instance on which to invoke the method.</param>
     /// <exception cref="ArgumentNullException"><paramref name="path" /> or <paramref name="method" /> is <c>null</c>.</exception>
-    public void RegisterFunction([NotNull] string path, [NotNull] MethodInfo method, object target)
+    public void RegisterFunction(string path, MethodInfo method, object target)
     {
         if (path == null)
         {
@@ -388,7 +386,7 @@ public sealed class LuaContext : IDisposable
     /// </summary>
     /// <param name="type">The type, which must not be <c>null</c>.</param>
     /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
-    public void RegisterTypeParser([NotNull] Type type, [NotNull] ITypeParser typeParser)
+    public void RegisterTypeParser(Type type, ITypeParser typeParser)
     {
         ObjectMarshalPool.GetMarshal(State).RegisterTypeParser(type, typeParser);
     }
@@ -399,7 +397,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="name">The name, which must not be <c>null</c>.</param>
     /// <param name="value">The value.</param>
     /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
-    public void SetGlobal([NotNull] string name, object value)
+    public void SetGlobal(string name, object value)
     {
         if (name == null)
         {

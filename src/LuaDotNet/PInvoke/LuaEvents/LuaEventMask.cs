@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace LuaDotNet.PInvoke.LuaEvents;
 
@@ -7,7 +6,6 @@ namespace LuaDotNet.PInvoke.LuaEvents;
 ///     Specifies the hook mask of a Lua event. These values are constants pulled from the lua.h file.
 /// </summary>
 [Flags]
-[PublicAPI]
 public enum LuaEventMask
 {
     /// <summary>

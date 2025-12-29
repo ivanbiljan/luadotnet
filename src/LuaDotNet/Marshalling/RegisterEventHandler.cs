@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using JetBrains.Annotations;
 using LuaDotNet.Exceptions;
 
 namespace LuaDotNet.Marshalling;
@@ -14,14 +13,13 @@ internal sealed class RegisterEventHandler
     private readonly EventInfo _event;
     private readonly object _target;
 
-    public RegisterEventHandler([NotNull] EventInfo eventInfo, object target)
+    public RegisterEventHandler(EventInfo eventInfo, object target)
     {
         _event = eventInfo ?? throw new ArgumentNullException(nameof(eventInfo));
         _target = target;
     }
-
-    [UsedImplicitly]
-    public void Add([NotNull] LuaFunction luaFunction)
+    
+    public void Add(LuaFunction luaFunction)
     {
         if (luaFunction == null)
         {
@@ -49,9 +47,8 @@ internal sealed class RegisterEventHandler
             throw new LuaException($"An exception has occured while adding an event handler: {ex}");
         }
     }
-
-    [UsedImplicitly]
-    public void Remove([NotNull] LuaFunction luaFunction)
+    
+    public void Remove(LuaFunction luaFunction)
     {
         if (luaFunction == null)
         {

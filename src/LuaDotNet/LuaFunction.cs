@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
@@ -8,7 +7,6 @@ namespace LuaDotNet;
 /// <summary>
 ///     Represents a managed, reusable Lua function.
 /// </summary>
-[PublicAPI]
 public sealed class LuaFunction : LuaObject
 {
     private readonly LuaModule.FunctionSignatures.LuaCFunction _luaCFunction;

@@ -8,13 +8,16 @@ namespace LuaDotNet.Extensions;
 /// </summary>
 public static class MethodBaseExtensions
 {
-    /// <summary>
-    ///     Checks whether the given method is an extension method.
-    /// </summary>
     /// <param name="methodBase">The method, which must not be <c>null</c>.</param>
-    /// <returns><c>true</c> if the method is an extension method; otherwise, <c>false</c>.</returns>
-    public static bool IsExtensionMethod(this MethodBase methodBase)
+    extension(MethodBase methodBase)
     {
-        return methodBase.IsDefined(typeof(ExtensionAttribute));
+        /// <summary>
+        ///     Checks whether the given method is an extension method.
+        /// </summary>
+        /// <returns><c>true</c> if the method is an extension method; otherwise, <c>false</c>.</returns>
+        public bool IsExtensionMethod()
+        {
+            return methodBase.IsDefined(typeof(ExtensionAttribute));
+        }
     }
 }

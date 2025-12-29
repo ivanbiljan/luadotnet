@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet;
@@ -7,7 +6,6 @@ namespace LuaDotNet;
 /// <summary>
 ///     Represents the base class for Lua objects.
 /// </summary>
-[PublicAPI]
 public abstract class LuaObject : IDisposable
 {
     private bool _disposed;

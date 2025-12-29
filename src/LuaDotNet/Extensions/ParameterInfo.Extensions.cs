@@ -8,19 +8,17 @@ namespace LuaDotNet.Extensions;
 /// </summary>
 public static class ParameterInfoExtensions
 {
-    /// <summary>
-    ///     Checks whether the provided parameter is a params array.
-    /// </summary>
     /// <param name="parameterInfo">The parameter, which must not be <c>null</c>.</param>
-    /// <returns><c>true</c> if the parameter is a params array; otherwise, <c>false</c>.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="parameterInfo" /> is <c>null</c>.</exception>
-    public static bool IsParamsArray(this ParameterInfo parameterInfo)
+    extension(ParameterInfo parameterInfo)
     {
-        if (parameterInfo == null)
+        /// <summary>
+        ///     Checks whether the provided parameter is a params array.
+        /// </summary>
+        /// <returns><c>true</c> if the parameter is a params array; otherwise, <c>false</c>.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="parameterInfo" /> is <c>null</c>.</exception>
+        public bool IsParamsArray()
         {
-            throw new ArgumentNullException(nameof(parameterInfo));
+            return parameterInfo.GetCustomAttribute<ParamArrayAttribute>() != null;
         }
-
-        return parameterInfo.GetCustomAttribute<ParamArrayAttribute>() != null;
     }
 }

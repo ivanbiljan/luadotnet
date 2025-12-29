@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
@@ -11,7 +10,6 @@ namespace LuaDotNet;
 /// <summary>
 ///     Represents a Lua table.
 /// </summary>
-[PublicAPI]
 public sealed class LuaTable : LuaObject, IDictionary<object, object>
 {
     private readonly Dictionary<object, object> _dictionaryCtx = new();

@@ -1,11 +1,8 @@
-﻿using JetBrains.Annotations;
-
-namespace LuaDotNet.PInvoke;
+﻿namespace LuaDotNet.PInvoke;
 
 /// <summary>
 ///     Holds constants related to the Lua registry. These values are constants pulled from the lua.h file.
 /// </summary>
-[PublicAPI]
 public enum LuaRegistry
 {
     /// <summary>

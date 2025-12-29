@@ -15,7 +15,8 @@ using LuaInteger = long; // Just to avoid improper marshalling
 
 namespace LuaDotNet.PInvoke;
 
-internal sealed class LuaModule : NativeLibrary
+// internal sealed class LuaModule : NativeLibrary What???
+internal sealed class LuaModule
 {
     public const int LuaMultRet = -1;
     public const int LuaNoRef = -2;
@@ -75,7 +76,7 @@ internal sealed class LuaModule : NativeLibrary
             throw new FileNotFoundException(path);
         }
 
-        Instance.Load(path);
+        Load(path);
     }
 
     public static LuaModule Instance { get; } = new();
