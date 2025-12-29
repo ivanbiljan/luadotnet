@@ -28,10 +28,10 @@ internal sealed class ObjectMarshal(LuaContext lua)
         [typeof(Array)] = () => new ArrayParser()
     };
 
-    public object GetObject(IntPtr state, int stackIndex)
+    public object? GetObject(IntPtr state, int stackIndex)
     {
         var luaType = Lua.LuaTypeExtImpl(state, stackIndex);
-        var objectType = typeof(object);
+        Type objectType;
         switch (luaType)
         {
             case LuaType.Nil:
@@ -51,7 +51,6 @@ internal sealed class ObjectMarshal(LuaContext lua)
 
                 break;
             case LuaType.Table:
-                //objectType = typeof(Array); Hmm
                 return new LuaTable(_lua, GetRegistryReference());
             case LuaType.Function:
                 return new LuaFunction(_lua, GetRegistryReference());
@@ -79,10 +78,10 @@ internal sealed class ObjectMarshal(LuaContext lua)
         }
     }
 
-    public object[] GetObjects(IntPtr state, int startIndex, int endIndex)
+    public object?[] GetObjects(IntPtr state, int startIndex, int endIndex)
     {
         var numElements = endIndex - startIndex + 1 >= 0 ? endIndex - startIndex + 1 : 0;
-        var objs = new object[numElements];
+        var objs = new object?[numElements];
         for (var i = startIndex; i <= endIndex; ++i)
         {
             objs[i - startIndex] = GetObject(state, i);

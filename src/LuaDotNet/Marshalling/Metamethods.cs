@@ -77,10 +77,9 @@ internal static class Metamethods
     private static int CallType(IntPtr state)
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-        var type = Lua.UserdataToNetObject(state, 1) as Type;
-        if (type == null)
+        if (Lua.UserdataToNetObject(state, 1) is not Type type)
         {
-            throw new LuaException("Attempt to instantiate a null type reference.");
+            return Lua.LuaError(state, "Attempt to instantiate a null type reference");
         }
 
         var typeMetadata = type.GetOrCreateMetadata();
@@ -88,7 +87,8 @@ internal static class Metamethods
         var constructor = PickOverload(typeMetadata.Constructors, arguments, out var convertedArguments);
         if (constructor == null)
         {
-            throw new LuaException(
+            return Lua.LuaError(
+                state,
                 $"No candidates for {type.Name}({string.Join(", ", arguments.Select(a => a.GetType().Name))})"
             );
         }
@@ -140,7 +140,7 @@ internal static class Metamethods
                 }
                 catch (TargetInvocationException ex)
                 {
-                    throw new LuaException($"An exception has occured while indexing a type's field: {ex}");
+                    return Lua.LuaError(state, $"An exception has occured while indexing a type's field: {ex}");
                 }
             case MemberTypes.Method:
                 try
@@ -152,7 +152,7 @@ internal static class Metamethods
                 }
                 catch (TargetInvocationException ex)
                 {
-                    throw new LuaException($"An exception has occured while indexing a type's method: {ex}");
+                    return Lua.LuaError(state, $"An exception has occured while indexing a type's method: {ex}");
                 }
             case MemberTypes.NestedType:
                 // TODO
@@ -171,7 +171,7 @@ internal static class Metamethods
                 }
                 catch (TargetInvocationException ex)
                 {
-                    throw new LuaException($"An exception has occured while indexing a type's property: {ex}");
+                    return Lua.LuaError(state, $"An exception has occured while indexing a type's property: {ex}");
                 }
 
                 break;
@@ -186,12 +186,12 @@ internal static class Metamethods
         var obj = objectMarshal.GetObject(state, 1);
         if (obj == null)
         {
-            throw new LuaException("Attempt to index a null object reference.");
+            return Lua.LuaError(state, "Attempt to index a null object reference.");
         }
 
         if (!(objectMarshal.GetObject(state, 2) is string memberName))
         {
-            throw new LuaException("Expected a proper member name.");
+            return Lua.LuaError(state, "Expected a proper member name.");
         }
 
         return GetMember(state, obj, memberName, false);
@@ -203,12 +203,12 @@ internal static class Metamethods
         var type = objectMarshal.GetObject(state, 1) as Type;
         if (type == null)
         {
-            throw new LuaException("Attempt to index a null type reference.");
+            return Lua.LuaError(state, "Attempt to index a null type reference.");
         }
 
         if (!(objectMarshal.GetObject(state, 2) is string memberName))
         {
-            throw new LuaException("Expected a proper member name.");
+            return Lua.LuaError(state, "Expected a proper member name.");
         }
 
         return GetMember(state, type, memberName, true);
@@ -221,7 +221,7 @@ internal static class Metamethods
         var secondOperand = objectMarshal.GetObject(state, 2);
         if (firstOperand == null && secondOperand == null)
         {
-            throw new LuaException("Cannot perform arithmetic operations on nil objects.");
+            return Lua.LuaError(state, "Cannot perform arithmetic operations on nil objects.");
         }
 
         var arguments = new[]
@@ -240,7 +240,8 @@ internal static class Metamethods
 
         if (method == null)
         {
-            throw new LuaException(
+            return Lua.LuaError(
+                state,
                 $"Attempt to perform an arithmetic operation on operands that do not overload the '{opMethodName}' operator."
             );
         }
@@ -252,7 +253,7 @@ internal static class Metamethods
         }
         catch (TargetInvocationException ex)
         {
-            throw new LuaException($"An exception has occured while executing an operator method: {ex}");
+            return Lua.LuaError(state, $"An exception has occured while executing an operator method: {ex}");
         }
 
         objectMarshal.PushToStack(state, result);
@@ -273,7 +274,7 @@ internal static class Metamethods
         var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
         if (members.Length == 0)
         {
-            throw new LuaException($"Invalid member '{memberName}'");
+            return Lua.LuaError(state, $"Invalid member '{memberName}'");
         }
 
         obj = isStaticSearch ? null : obj;
@@ -289,7 +290,7 @@ internal static class Metamethods
                 }
                 catch (Exception ex)
                 {
-                    throw new LuaException($"An exception has occured while modifying a field: {ex}");
+                    return Lua.LuaError(state, $"An exception has occured while modifying a field: {ex}");
                 }
 
                 break;
@@ -299,7 +300,7 @@ internal static class Metamethods
                     var property = (PropertyInfo) member;
                     if (property.GetIndexParameters().Length > 0)
                     {
-                        throw new LuaException("Attempt to modify the value of an indexer.");
+                        return Lua.LuaError(state, "Attempt to modify the value of an indexer.");
                     }
 
                     var value = objectMarshal.GetObject(state, 3);
@@ -307,12 +308,12 @@ internal static class Metamethods
                 }
                 catch (Exception ex)
                 {
-                    throw new LuaException($"An exception has occured while modifying a field: {ex}");
+                    return Lua.LuaError(state, $"An exception has occured while modifying a field: {ex}");
                 }
 
                 break;
             default:
-                throw new LuaException("Member is not a .NET field or property.");
+                return Lua.LuaError(state, "Member is not a .NET field or property.");
         }
 
         return 0;
@@ -324,12 +325,12 @@ internal static class Metamethods
         var obj = objectMarshal.GetObject(state, 1);
         if (obj == null)
         {
-            throw new LuaException("Attempt to call __newindex on a null object reference.");
+            return Lua.LuaError(state, "Attempt to call __newindex on a null object reference.");
         }
 
         if (!(objectMarshal.GetObject(state, 2) is string memberName))
         {
-            throw new LuaException("Expected a proper member name.");
+            return Lua.LuaError(state, "Expected a proper member name.");
         }
 
         return SetMember(state, obj, memberName, false);
@@ -341,12 +342,12 @@ internal static class Metamethods
         var type = objectMarshal.GetObject(state, 1) as Type;
         if (type == null)
         {
-            throw new LuaException("Attempt to call __newindex on a null type reference.");
+            return Lua.LuaError(state, "Attempt to call __newindex on a null type reference.");
         }
 
         if (!(objectMarshal.GetObject(state, 2) is string memberName))
         {
-            throw new LuaException("Expected a proper member name.");
+            return Lua.LuaError(state, "Expected a proper member name.");
         }
 
         return SetMember(state, type, memberName, true);
