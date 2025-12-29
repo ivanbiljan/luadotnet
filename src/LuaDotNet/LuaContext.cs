@@ -24,10 +24,10 @@ public sealed class LuaContext : IDisposable
     /// </summary>
     public LuaContext(bool openLibs = true)
     {
-        State = LuaModule.Instance.LuaLNewState();
+        State = LuaModule.LuaLNewState();
         if (openLibs)
         {
-            LuaModule.Instance.LuaLOpenLibs(State);
+            LuaModule.LuaLOpenLibs(State);
         }
 
         ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
@@ -96,11 +96,11 @@ public sealed class LuaContext : IDisposable
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        var statePointer = LuaModule.Instance.LuaNewThread(State);
+        var statePointer = LuaModule.LuaNewThread(State);
         luaFunction.PushToStack(State);
-        LuaModule.Instance.LuaXMove(State, statePointer, 1);
+        LuaModule.LuaXMove(State, statePointer, 1);
         var coroutine = (LuaCoroutine) objectMarshal.GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         return coroutine;
     }
@@ -176,7 +176,7 @@ public sealed class LuaContext : IDisposable
 //            }
 //
 //            var functionExpression = Expression.Block(functionBody.ToArray());
-//            var luaCFunction = Expression.Lambda<LuaModule.FunctionSignatures.LuaCFunction>(functionExpression, luaStateParameter)
+//            var luaCFunction = Expression.Lambda<LuaModule.LuaCFunction>(functionExpression, luaStateParameter)
 //                .Compile();
         return new LuaFunction(this, new MethodWrapper(methodInfo, target).Callback);
     }
@@ -192,9 +192,9 @@ public sealed class LuaContext : IDisposable
         numberOfSeqElements = Math.Max(0, numberOfSeqElements);
         numberOfOtherElements = Math.Max(0, numberOfOtherElements);
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        LuaModule.Instance.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
+        LuaModule.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
         var table = (LuaTable) objectMarshal.GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         return table;
     }
@@ -221,19 +221,19 @@ public sealed class LuaContext : IDisposable
             throw new FileNotFoundException();
         }
 
-        var errorCode = LuaModule.Instance.LuaLLoadString(
+        var errorCode = LuaModule.LuaLLoadString(
             State,
             File.ReadAllText(file).GetEncodedString(Encoding.UTF8)
         );
 
         if (errorCode == LuaErrorCode.LuaOk)
         {
-            return LuaModule.Instance.PCallKInternal(State, null, numberOfResults);
+            return LuaModule.PCallKInternal(State, null, numberOfResults);
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         var errorMessage = (string) objectMarshal.GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
     }
@@ -252,16 +252,16 @@ public sealed class LuaContext : IDisposable
             throw new ArgumentNullException(nameof(luaChunk));
         }
 
-        var errorCode = LuaModule.Instance.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
+        var errorCode = LuaModule.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
         if (errorCode == LuaErrorCode.LuaOk)
         {
-            return LuaModule.Instance.PCallKInternal(State, numberOfResults: numberOfResults);
+            return LuaModule.PCallKInternal(State, numberOfResults: numberOfResults);
         }
 
         // Lua pushes an error message in case of errors
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         var errorMessage = (string) objectMarshal.GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
     }
@@ -279,9 +279,9 @@ public sealed class LuaContext : IDisposable
             throw new ArgumentNullException(nameof(name));
         }
 
-        LuaModule.Instance.LuaGetGlobal(State, name);
+        LuaModule.LuaGetGlobal(State, name);
         var obj = ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         return obj;
     }
@@ -342,16 +342,16 @@ public sealed class LuaContext : IDisposable
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        if (LuaModule.Instance.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
+        if (LuaModule.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
         {
             var errorMessage = (string) objectMarshal.GetObject(State, -1);
-            LuaModule.Instance.LuaPop(State, 1);
+            LuaModule.LuaPop(State, 1);
 
             throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
         }
 
         var function = (LuaFunction) objectMarshal.GetObject(State, -1);
-        LuaModule.Instance.LuaPop(State, 1);
+        LuaModule.LuaPop(State, 1);
 
         return function;
     }
@@ -375,10 +375,10 @@ public sealed class LuaContext : IDisposable
             throw new ArgumentNullException(nameof(method));
         }
 
-        var oldTop = LuaModule.Instance.LuaGetTop(State);
+        var oldTop = LuaModule.LuaGetTop(State);
         var function = CreateFunction(method, target);
         SetGlobal(path, function);
-        LuaModule.Instance.LuaSetTop(State, oldTop);
+        LuaModule.LuaSetTop(State, oldTop);
     }
 
     /// <summary>
@@ -405,11 +405,11 @@ public sealed class LuaContext : IDisposable
         }
 
         ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
-        LuaModule.Instance.LuaSetGlobal(State, name);
+        LuaModule.LuaSetGlobal(State, name);
     }
 
     private void ReleaseUnmanagedResources()
     {
-        LuaModule.Instance.LuaClose(State);
+        LuaModule.LuaClose(State);
     }
 }

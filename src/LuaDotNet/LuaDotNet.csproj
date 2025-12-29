@@ -4,16 +4,17 @@
         <TargetFramework>net10.0</TargetFramework>
         <LangVersion>default</LangVersion>
         <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Update="libs\x64\lua53.dll">
+        <None Update="runtimes\x64\lua53.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="libs\x86\lua53.dll">
+        <None Update="runtimes\x86\lua53.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
-        <None Update="libs\x64\liblua53.so">
+        <None Update="runtimes\x64\liblua53.so">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>

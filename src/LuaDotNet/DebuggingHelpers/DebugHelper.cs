@@ -12,10 +12,10 @@ internal static class DebugHelper
     {
         var table = new DebugTable("Stack Index", "Type", "Value");
         Debug.WriteLine($"--------------- STACK ({caller}) ---------------");
-        for (var i = 1; i <= LuaModule.Instance.LuaGetTop(luaState); ++i)
+        for (var i = 1; i <= LuaModule.LuaGetTop(luaState); ++i)
         {
             var value = string.Empty;
-            var luaType = LuaModule.Instance.LuaType(luaState, i);
+            var luaType = LuaModule.LuaTypeExtImpl(luaState, i);
             switch (luaType)
             {
                 case LuaType.Nil:
@@ -23,7 +23,7 @@ internal static class DebugHelper
 
                     break;
                 case LuaType.Boolean:
-                    value = LuaModule.Instance.LuaToBoolean(luaState, i).ToString();
+                    value = LuaModule.LuaToBoolean(luaState, i).ToString();
 
                     break;
                 case LuaType.LightUserdata:
@@ -33,9 +33,9 @@ internal static class DebugHelper
                 case LuaType.Thread:
                     break;
                 case LuaType.Number:
-                    value = LuaModule.Instance.LuaIsInteger(luaState, i)
-                        ? LuaModule.Instance.LuaToIntegerX(luaState, i, out _).ToString()
-                        : LuaModule.Instance.LuaToNumberX(luaState, i, out _).ToString(CultureInfo.CurrentCulture);
+                    value = LuaModule.LuaIsInteger(luaState, i)
+                        ? LuaModule.LuaToIntegerX(luaState, i, out _).ToString()
+                        : LuaModule.LuaToNumberX(luaState, i, out _).ToString(CultureInfo.CurrentCulture);
 
                     break;
                 case LuaType.String:

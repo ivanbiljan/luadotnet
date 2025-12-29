@@ -8,23 +8,23 @@ public sealed class NumberParser : ITypeParser
 {
     public object Parse(IntPtr state, int stackIndex)
     {
-        if (LuaModule.Instance.LuaIsInteger(state, stackIndex))
+        if (LuaModule.LuaIsInteger(state, stackIndex))
         {
-            return LuaModule.Instance.LuaToIntegerX(state, stackIndex, out _);
+            return LuaModule.LuaToIntegerX(state, stackIndex, out _);
         }
 
-        return LuaModule.Instance.LuaToNumberX(state, stackIndex, out _);
+        return LuaModule.LuaToNumberX(state, stackIndex, out _);
     }
 
     public void Push(IntPtr state, object obj)
     {
         if (obj.GetType().IsInteger())
         {
-            LuaModule.Instance.LuaPushInteger(state, (long) Convert.ChangeType(obj, typeof(long)));
+            LuaModule.LuaPushInteger(state, (long) Convert.ChangeType(obj, typeof(long)));
 
             return;
         }
 
-        LuaModule.Instance.LuaPushNumber(state, (double) Convert.ChangeType(obj, typeof(double)));
+        LuaModule.LuaPushNumber(state, (double) Convert.ChangeType(obj, typeof(double)));
     }
 }

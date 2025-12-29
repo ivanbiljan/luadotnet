@@ -21,6 +21,6 @@ internal static class ObjectMarshalPool
             return marshal;
         }
 
-        return Marshals.GetValueOrDefault(LuaModule.Instance.GetMainThreadPointer(state));
+        return Marshals.GetValueOrDefault(LuaModule.GetMainThreadPointer(state));
     }
 }

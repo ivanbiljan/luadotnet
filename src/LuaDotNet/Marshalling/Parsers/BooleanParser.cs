@@ -7,11 +7,11 @@ public sealed class BooleanParser : ITypeParser
 {
     public object Parse(IntPtr state, int stackIndex)
     {
-        return LuaModule.Instance.LuaToBoolean(state, stackIndex);
+        return LuaModule.LuaToBoolean(state, stackIndex);
     }
 
     public void Push(IntPtr state, object obj)
     {
-        LuaModule.Instance.LuaPushBoolean(state, (bool) obj);
+        LuaModule.LuaPushBoolean(state, (bool) obj);
     }
 }

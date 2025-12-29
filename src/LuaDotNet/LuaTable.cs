@@ -18,11 +18,11 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(lua.State);
         PushToStack(Lua.State);
-        LuaModule.Instance.LuaPushNil(Lua.State);
-        while (LuaModule.Instance.LuaNext(Lua.State, -2) != 0)
+        LuaModule.LuaPushNil(Lua.State);
+        while (LuaModule.LuaNext(Lua.State, -2) != 0)
         {
             _dictionaryCtx.Add(objectMarshal.GetObject(lua.State, -2), objectMarshal.GetObject(lua.State, -1));
-            LuaModule.Instance.LuaPop(Lua.State, 1);
+            LuaModule.LuaPop(Lua.State, 1);
         }
     }
 
@@ -49,7 +49,7 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
         PushToStack(Lua.State);
         objectMarshal.PushToStack(Lua.State, key);
         objectMarshal.PushToStack(Lua.State, null);
-        LuaModule.Instance.LuaRawSet(Lua.State, -3);
+        LuaModule.LuaRawSet(Lua.State, -3);
 
         _dictionaryCtx.Remove(key);
 
@@ -100,7 +100,7 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
                 PushToStack(Lua.State);
                 objectMarshal.PushToStack(Lua.State, key);
                 objectMarshal.PushToStack(Lua.State, value);
-                LuaModule.Instance.LuaSetTable(Lua.State, -3);
+                LuaModule.LuaSetTable(Lua.State, -3);
                 _dictionaryCtx[key] = value;
             }
             else
@@ -121,7 +121,7 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
         PushToStack(Lua.State);
         objectMarshal.PushToStack(Lua.State, key);
         objectMarshal.PushToStack(Lua.State, value);
-        LuaModule.Instance.LuaRawSet(Lua.State, -3);
+        LuaModule.LuaRawSet(Lua.State, -3);
 
         _dictionaryCtx.Add(key, value);
     }
@@ -129,13 +129,13 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
     public void Clear()
     {
         PushToStack(Lua.State);
-        LuaModule.Instance.LuaPushNil(Lua.State);
-        while (LuaModule.Instance.LuaNext(Lua.State, -2) != 0)
+        LuaModule.LuaPushNil(Lua.State);
+        while (LuaModule.LuaNext(Lua.State, -2) != 0)
         {
-            LuaModule.Instance.LuaPushValue(Lua.State, -2); // key
-            LuaModule.Instance.LuaPushNil(Lua.State); // value
-            LuaModule.Instance.LuaRawSet(Lua.State, -5); // t[key] = nil
-            LuaModule.Instance.LuaPop(Lua.State, 1); // pop the value, leave the key
+            LuaModule.LuaPushValue(Lua.State, -2); // key
+            LuaModule.LuaPushNil(Lua.State); // value
+            LuaModule.LuaRawSet(Lua.State, -5); // t[key] = nil
+            LuaModule.LuaPop(Lua.State, 1); // pop the value, leave the key
         }
 
         _dictionaryCtx.Clear();

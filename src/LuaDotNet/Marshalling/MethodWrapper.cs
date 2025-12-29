@@ -36,7 +36,7 @@ internal sealed class MethodWrapper
     public int Callback(IntPtr state)
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-        var args = objectMarshal.GetObjects(state, _isStatic ? 1 : 2, LuaModule.Instance.LuaGetTop(state));
+        var args = objectMarshal.GetObjects(state, _isStatic ? 1 : 2, LuaModule.LuaGetTop(state));
         var method = Utils.PickOverload(_methods, args, out args);
         if (method == null)
         {

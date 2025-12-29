@@ -51,7 +51,7 @@ public abstract class LuaObject : IDisposable
 
     internal virtual void PushToStack(IntPtr state)
     {
-        LuaModule.Instance.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
+        LuaModule.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
     }
 
     private void ReleaseUnmanagedResources()
@@ -61,6 +61,6 @@ public abstract class LuaObject : IDisposable
             return;
         }
 
-        LuaModule.Instance.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
+        LuaModule.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
     }
 }

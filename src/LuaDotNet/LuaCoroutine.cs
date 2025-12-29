@@ -49,8 +49,8 @@ public sealed class LuaCoroutine : LuaObject
         get
         {
             ObjectMarshalPool.GetMarshal(Lua.State).PushToStack(Lua.State, this);
-            var handle = LuaModule.Instance.LuaToThread(Lua.State, -1);
-            LuaModule.Instance.LuaPop(Lua.State, 1);
+            var handle = LuaModule.LuaToThread(Lua.State, -1);
+            LuaModule.LuaPop(Lua.State, 1);
 
             return handle;
         }
@@ -63,22 +63,22 @@ public sealed class LuaCoroutine : LuaObject
     {
         get
         {
-            var coroutineState = LuaModule.Instance.LuaToThread(Lua.State, 1);
+            var coroutineState = LuaModule.LuaToThread(Lua.State, 1);
             if (Lua.State == coroutineState)
             {
                 return CoroutineStatus.Running;
             }
 
-            var status = LuaModule.Instance.LuaStatus(Lua.State);
+            var status = LuaModule.LuaStatus(Lua.State);
             switch (status)
             {
                 case LuaErrorCode.LuaOk:
-                    if (LuaModule.Instance.LuaGetStack(Lua.State, 0, out _) == 1)
+                    if (LuaModule.LuaGetStack(Lua.State, 0, out _) == 1)
                     {
                         return CoroutineStatus.Normal;
                     }
 
-                    if (LuaModule.Instance.LuaGetTop(Lua.State) == 0)
+                    if (LuaModule.LuaGetTop(Lua.State) == 0)
                     {
                         return CoroutineStatus.Dead;
                     }
@@ -108,18 +108,18 @@ public sealed class LuaCoroutine : LuaObject
     public (bool success, string errorMessage, object[] results) Resume(int nargs = 0)
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-        if (!LuaModule.Instance.LuaCheckStack(CoroutineState, nargs))
+        if (!LuaModule.LuaCheckStack(CoroutineState, nargs))
         {
             throw new LuaException("The stack does not have enough space to fit that many arguments.");
         }
 
-        if (LuaModule.Instance.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk &&
-            LuaModule.Instance.LuaGetTop(CoroutineState) == 0)
+        if (LuaModule.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk &&
+            LuaModule.LuaGetTop(CoroutineState) == 0)
         {
             throw new LuaException("Cannot resume a dead coroutine.");
         }
 
-        LuaModule.Instance.LuaXMove(
+        LuaModule.LuaXMove(
             Lua.State,
             CoroutineState,
             nargs
@@ -145,13 +145,13 @@ public sealed class LuaCoroutine : LuaObject
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
         arguments ??= new object[0];
-        if (!LuaModule.Instance.LuaCheckStack(CoroutineState, arguments.Length))
+        if (!LuaModule.LuaCheckStack(CoroutineState, arguments.Length))
         {
             throw new LuaException("The stack does not have enough space to fit that many arguments.");
         }
 
-        if (LuaModule.Instance.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk &&
-            LuaModule.Instance.LuaGetTop(CoroutineState) == 0)
+        if (LuaModule.LuaStatus(CoroutineState) == LuaErrorCode.LuaOk &&
+            LuaModule.LuaGetTop(CoroutineState) == 0)
         {
             throw new LuaException("Cannot resume a dead coroutine.");
         }
@@ -168,35 +168,35 @@ public sealed class LuaCoroutine : LuaObject
     {
         var result = (success: false, error: string.Empty, results: new object[0]);
         var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-        var threadStatus = LuaModule.Instance.LuaResume(CoroutineState, default, numberOfArguments, out _);
-        var oldStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
+        var threadStatus = LuaModule.LuaResume(CoroutineState, default, numberOfArguments, out _);
+        var oldStackTop = LuaModule.LuaGetTop(Lua.State);
         if (threadStatus == LuaErrorCode.LuaOk || threadStatus == LuaErrorCode.LuaYield)
         {
             // The results are all that's left on the stack; ensure that there's enough space left to push them back to the caller's stack
-            var numberOfResults = LuaModule.Instance.LuaGetTop(CoroutineState);
-            if (!LuaModule.Instance.LuaCheckStack(Lua.State, numberOfResults + 1))
+            var numberOfResults = LuaModule.LuaGetTop(CoroutineState);
+            if (!LuaModule.LuaCheckStack(Lua.State, numberOfResults + 1))
             {
                 throw new LuaException("The stack does not have enough space to fit that many results.");
             }
 
             // Propagate the results back to the caller
-            LuaModule.Instance.LuaXMove(CoroutineState, Lua.State, numberOfResults);
+            LuaModule.LuaXMove(CoroutineState, Lua.State, numberOfResults);
             result.results = new object[numberOfResults];
-            var newStackTop = LuaModule.Instance.LuaGetTop(Lua.State);
+            var newStackTop = LuaModule.LuaGetTop(Lua.State);
             for (var i = oldStackTop + 1; i <= newStackTop; ++i)
             {
                 result.results[i - oldStackTop - 1] = objectMarshal.GetObject(Lua.State, i);
             }
 
-            LuaModule.Instance.LuaPop(Lua.State, numberOfResults);
+            LuaModule.LuaPop(Lua.State, numberOfResults);
             result.success = true;
         }
         else
         {
             // Propagate the error message back to the caller
-            LuaModule.Instance.LuaXMove(Lua.State, Lua.State, 1);
+            LuaModule.LuaXMove(Lua.State, Lua.State, 1);
             result.error = (string) objectMarshal.GetObject(Lua.State, -1);
-            LuaModule.Instance.LuaPop(Lua.State, 1);
+            LuaModule.LuaPop(Lua.State, 1);
             result.success = false;
         }
 

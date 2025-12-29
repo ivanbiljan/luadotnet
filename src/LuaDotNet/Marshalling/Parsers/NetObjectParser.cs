@@ -10,7 +10,7 @@ public sealed class NetObjectParser : ITypeParser
 {
     public object Parse(IntPtr state, int stackIndex)
     {
-        var netObject = LuaModule.Instance.UserdataToNetObject(state, stackIndex);
+        var netObject = LuaModule.UserdataToNetObject(state, stackIndex);
         if (netObject is Type)
         {
             return new NetTypeTypeParser().Parse(state, stackIndex);
@@ -28,8 +28,8 @@ public sealed class NetObjectParser : ITypeParser
             return;
         }
 
-        LuaModule.Instance.PushNetObjAsUserdata(state, obj);
-        LuaModule.Instance.LuaGetField(state, (int) LuaRegistry.RegistryIndex, Metamethods.NetObjectMetatable);
-        LuaModule.Instance.LuaSetMetatable(state, -2);
+        LuaModule.PushNetObjAsUserdata(state, obj);
+        LuaModule.LuaGetField(state, (int) LuaRegistry.RegistryIndex, Metamethods.NetObjectMetatable);
+        LuaModule.LuaSetMetatable(state, -2);
     }
 }

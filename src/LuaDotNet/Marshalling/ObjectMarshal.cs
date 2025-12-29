@@ -35,7 +35,7 @@ internal sealed class ObjectMarshal
 
     public object GetObject(IntPtr state, int stackIndex)
     {
-        var luaType = LuaModule.Instance.LuaType(state, stackIndex);
+        var luaType = LuaModule.LuaTypeExtImpl(state, stackIndex);
         var objectType = typeof(object);
         switch (luaType)
         {
@@ -61,7 +61,7 @@ internal sealed class ObjectMarshal
             case LuaType.Function:
                 return new LuaFunction(_lua, GetRegistryReference());
             case LuaType.Userdata:
-                return LuaModule.Instance.UserdataToNetObject(state, stackIndex);
+                return LuaModule.UserdataToNetObject(state, stackIndex);
             case LuaType.Thread:
                 return new LuaCoroutine(_lua, GetRegistryReference());
             default:
@@ -78,9 +78,9 @@ internal sealed class ObjectMarshal
 
         int GetRegistryReference()
         {
-            LuaModule.Instance.LuaPushValue(state, stackIndex);
+            LuaModule.LuaPushValue(state, stackIndex);
 
-            return LuaModule.Instance.LuaLRef(state, (int) LuaRegistry.RegistryIndex);
+            return LuaModule.LuaLRef(state, (int) LuaRegistry.RegistryIndex);
         }
     }
 
@@ -101,11 +101,11 @@ internal sealed class ObjectMarshal
         switch (obj)
         {
             case null:
-                LuaModule.Instance.LuaPushNil(state);
+                LuaModule.LuaPushNil(state);
 
                 return;
-            case LuaModule.FunctionSignatures.LuaCFunction luaCFunction:
-                LuaModule.Instance.LuaPushCClosure(state, luaCFunction, 0);
+            case LuaModule.LuaCFunction luaCFunction:
+                LuaModule.LuaPushCClosure(state, luaCFunction, 0);
 
                 return;
             case LuaObject luaObject:
