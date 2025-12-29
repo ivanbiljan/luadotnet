@@ -9,7 +9,6 @@ using System.Text;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.Marshalling;
-using NLdr.Framework;
 using LuaInteger = long; // Just to avoid improper marshalling
 #pragma warning disable 649
 
@@ -18,6 +17,8 @@ namespace LuaDotNet.PInvoke;
 // internal sealed class LuaModule : NativeLibrary What???
 internal sealed class LuaModule
 {
+    private const string RuntimesDirectory = "runtimes";
+    
     public const int LuaMultRet = -1;
     public const int LuaNoRef = -2;
     public const int LuaRefNil = -1;
@@ -70,13 +71,13 @@ internal sealed class LuaModule
     {
         var architecture = IntPtr.Size == 8 ? "x64" : "x86";
         var runtime = RuntimeInformation.IsOSPlatform(OSPlatform.Linux) ? "liblua53.so" : "lua53.dll";
-        var path = Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), "libs", architecture, runtime);
+        var path = Path.Combine(Assembly.GetExecutingAssembly().GetDirectory(), RuntimesDirectory, architecture, runtime);
         if (!File.Exists(path))
         {
             throw new FileNotFoundException(path);
         }
 
-        Load(path);
+        NativeLibrary.Load(path);
     }
 
     public static LuaModule Instance { get; } = new();

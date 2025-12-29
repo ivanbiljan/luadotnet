@@ -7,12 +7,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Reference Include="NLdr, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\..\refs\NLdr.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
-    <ItemGroup>
         <None Update="libs\x64\lua53.dll">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -22,6 +16,12 @@
         <None Update="libs\x64\liblua53.so">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="NLdr">
+        <HintPath>..\..\refs\NLdr.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 </Project>
