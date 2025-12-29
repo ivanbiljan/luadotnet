@@ -13,7 +13,7 @@ using LuaInteger = long;
 
 namespace LuaDotNet.PInvoke;
 
-internal sealed partial class LuaModule
+internal sealed partial class Lua
 {
     private const string RuntimesDirectory = "runtimes";
     private const string LibraryName = "lua";
@@ -22,7 +22,7 @@ internal sealed partial class LuaModule
     public const int LuaNoRef = -2;
     public const int LuaRefNil = -1;
 
-    static LuaModule()
+    static Lua()
     {
         NativeLibrary.SetDllImportResolver(
             Assembly.GetExecutingAssembly(),

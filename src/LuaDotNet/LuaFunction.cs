@@ -9,15 +9,15 @@ namespace LuaDotNet;
 /// </summary>
 public sealed class LuaFunction : LuaObject
 {
-    private readonly LuaModule.LuaCFunction _luaCFunction;
+    private readonly Lua.LuaCFunction _luaCFunction;
 
     internal LuaFunction(LuaContext lua, int reference) : base(lua, reference)
     {
     }
 
-    internal LuaFunction(LuaContext lua, LuaModule.LuaCFunction luaCFunction) : base(
+    internal LuaFunction(LuaContext lua, Lua.LuaCFunction luaCFunction) : base(
         lua,
-        LuaModule.LuaNoRef
+        PInvoke.Lua.LuaNoRef
     )
     {
         _luaCFunction = luaCFunction ?? throw new ArgumentNullException(nameof(luaCFunction));
@@ -25,9 +25,9 @@ public sealed class LuaFunction : LuaObject
 
     internal override void PushToStack(IntPtr state)
     {
-        if (Reference == LuaModule.LuaNoRef)
+        if (Reference == PInvoke.Lua.LuaNoRef)
         {
-            LuaModule.LuaPushCClosure(state, _luaCFunction, 0);
+            PInvoke.Lua.LuaPushCClosure(state, _luaCFunction, 0);
 
             return;
         }
@@ -44,6 +44,6 @@ public sealed class LuaFunction : LuaObject
     {
         ObjectMarshalPool.GetMarshal(Lua.State).PushToStack(Lua.State, this);
 
-        return LuaModule.PCallKInternal(Lua.State, arguments);
+        return PInvoke.Lua.PCallKInternal(Lua.State, arguments);
     }
 }

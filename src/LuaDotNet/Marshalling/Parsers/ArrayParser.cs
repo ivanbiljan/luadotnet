@@ -9,15 +9,15 @@ public sealed class ArrayParser : ITypeParser
     public object Parse(IntPtr state, int stackIndex)
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-        if (!LuaModule.LuaIsTable(state, stackIndex))
+        if (!Lua.LuaIsTable(state, stackIndex))
         {
             return null;
         }
 
         var objects = new List<object>();
         for (objectMarshal.PushToStack(state, null);
-             LuaModule.LuaNext(state, -2) > 0;
-             LuaModule.LuaPop(state, 1))
+             Lua.LuaNext(state, -2) > 0;
+             Lua.LuaPop(state, 1))
         {
             objects.Add(objectMarshal.GetObject(state, -1));
         }
@@ -29,12 +29,12 @@ public sealed class ArrayParser : ITypeParser
     {
         var array = (Array) obj;
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-        LuaModule.LuaCreateTable(state, array.Length, 0);
+        Lua.LuaCreateTable(state, array.Length, 0);
 
         for (var i = 0; i < array.Length; ++i)
         {
             objectMarshal.PushToStack(state, array.GetValue(i));
-            LuaModule.LuaRawSetI(state, -2, i + 1);
+            Lua.LuaRawSetI(state, -2, i + 1);
         }
     }
 }

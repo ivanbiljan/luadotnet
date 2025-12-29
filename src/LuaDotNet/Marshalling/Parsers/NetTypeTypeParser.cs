@@ -7,13 +7,13 @@ public sealed class NetTypeTypeParser : ITypeParser
 {
     public object Parse(IntPtr state, int stackIndex)
     {
-        return LuaModule.UserdataToNetObject(state, stackIndex);
+        return Lua.UserdataToNetObject(state, stackIndex);
     }
 
     public void Push(IntPtr state, object obj)
     {
-        LuaModule.PushNetObjAsUserdata(state, obj);
-        LuaModule.LuaGetField(state, (int) LuaRegistry.RegistryIndex, Metamethods.NetTypeMetatable);
-        LuaModule.LuaSetMetatable(state, -2);
+        Lua.PushNetObjAsUserdata(state, obj);
+        Lua.LuaGetField(state, (int) LuaRegistry.RegistryIndex, Metamethods.NetTypeMetatable);
+        Lua.LuaSetMetatable(state, -2);
     }
 }

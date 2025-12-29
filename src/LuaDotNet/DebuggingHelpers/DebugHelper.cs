@@ -12,10 +12,10 @@ internal static class DebugHelper
     {
         var table = new DebugTable("Stack Index", "Type", "Value");
         Debug.WriteLine($"--------------- STACK ({caller}) ---------------");
-        for (var i = 1; i <= LuaModule.LuaGetTop(luaState); ++i)
+        for (var i = 1; i <= Lua.LuaGetTop(luaState); ++i)
         {
             var value = string.Empty;
-            var luaType = LuaModule.LuaTypeExtImpl(luaState, i);
+            var luaType = Lua.LuaTypeExtImpl(luaState, i);
             switch (luaType)
             {
                 case LuaType.Nil:
@@ -23,7 +23,7 @@ internal static class DebugHelper
 
                     break;
                 case LuaType.Boolean:
-                    value = LuaModule.LuaToBoolean(luaState, i).ToString();
+                    value = Lua.LuaToBoolean(luaState, i).ToString();
 
                     break;
                 case LuaType.LightUserdata:
@@ -33,9 +33,9 @@ internal static class DebugHelper
                 case LuaType.Thread:
                     break;
                 case LuaType.Number:
-                    value = LuaModule.LuaIsInteger(luaState, i)
-                        ? LuaModule.LuaToIntegerX(luaState, i, out _).ToString()
-                        : LuaModule.LuaToNumberX(luaState, i, out _).ToString(CultureInfo.CurrentCulture);
+                    value = Lua.LuaIsInteger(luaState, i)
+                        ? Lua.LuaToIntegerX(luaState, i, out _).ToString()
+                        : Lua.LuaToNumberX(luaState, i, out _).ToString(CultureInfo.CurrentCulture);
 
                     break;
                 case LuaType.String:

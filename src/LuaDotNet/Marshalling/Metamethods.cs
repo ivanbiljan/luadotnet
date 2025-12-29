@@ -17,7 +17,7 @@ internal static class Metamethods
     public const string NetObjectMetatable = "luadotnet_object";
     public const string NetTypeMetatable = "luadotnet_type";
 
-    private static readonly Dictionary<string, LuaModule.LuaCFunction> TypeMetamethods =
+    private static readonly Dictionary<string, Lua.LuaCFunction> TypeMetamethods =
         new()
         {
             ["__gc"] = Gc,
@@ -27,7 +27,7 @@ internal static class Metamethods
             ["__newindex"] = SetTypeMember
         };
 
-    private static readonly Dictionary<string, LuaModule.LuaCFunction> ObjectMetamethods =
+    private static readonly Dictionary<string, Lua.LuaCFunction> ObjectMetamethods =
         new()
         {
             ["__gc"] = Gc,
@@ -42,15 +42,15 @@ internal static class Metamethods
 
     public static void CreateMetatables(IntPtr state)
     {
-        LuaModule.LuaLNewMetatable(state, NetTypeMetatable);
+        Lua.LuaLNewMetatable(state, NetTypeMetatable);
         PushMetamethod("__gc", TypeMetamethods["__gc"]);
         PushMetamethod("__tostring", TypeMetamethods["__tostring"]);
         PushMetamethod("__call", TypeMetamethods["__call"]);
         PushMetamethod("__index", TypeMetamethods["__index"]);
         PushMetamethod("__newindex", TypeMetamethods["__newindex"]);
-        LuaModule.LuaPop(state, 1);
+        Lua.LuaPop(state, 1);
 
-        LuaModule.LuaLNewMetatable(state, NetObjectMetatable);
+        Lua.LuaLNewMetatable(state, NetObjectMetatable);
         PushMetamethod("__gc", ObjectMetamethods["__gc"]);
         PushMetamethod("__tostring", ObjectMetamethods["__tostring"]);
         PushMetamethod("__index", ObjectMetamethods["__index"]);
@@ -59,13 +59,13 @@ internal static class Metamethods
         PushMetamethod("__sub", ObjectMetamethods["__sub"]);
         PushMetamethod("__mul", ObjectMetamethods["__mul"]);
         PushMetamethod("__div", ObjectMetamethods["__div"]);
-        LuaModule.LuaPop(state, 1);
+        Lua.LuaPop(state, 1);
 
-        void PushMetamethod(string metamethod, LuaModule.LuaCFunction luaCFunction)
+        void PushMetamethod(string metamethod, Lua.LuaCFunction luaCFunction)
         {
-            LuaModule.LuaPushLString(state, metamethod);
-            LuaModule.LuaPushCClosure(state, luaCFunction, 0);
-            LuaModule.LuaSetTable(state, -3);
+            Lua.LuaPushLString(state, metamethod);
+            Lua.LuaPushCClosure(state, luaCFunction, 0);
+            Lua.LuaSetTable(state, -3);
         }
     }
 
@@ -77,14 +77,14 @@ internal static class Metamethods
     private static int CallType(IntPtr state)
     {
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
-        var type = LuaModule.UserdataToNetObject(state, 1) as Type;
+        var type = Lua.UserdataToNetObject(state, 1) as Type;
         if (type == null)
         {
             throw new LuaException("Attempt to instantiate a null type reference.");
         }
 
         var typeMetadata = type.GetOrCreateMetadata();
-        var arguments = objectMarshal.GetObjects(state, 2, LuaModule.LuaGetTop(state));
+        var arguments = objectMarshal.GetObjects(state, 2, Lua.LuaGetTop(state));
         var constructor = PickOverload(typeMetadata.Constructors, arguments, out var convertedArguments);
         if (constructor == null)
         {
@@ -106,7 +106,7 @@ internal static class Metamethods
 
     private static int Gc(IntPtr state)
     {
-        GCHandle.FromIntPtr(Marshal.ReadIntPtr(LuaModule.LuaToUserdata(state, 1))).Free();
+        GCHandle.FromIntPtr(Marshal.ReadIntPtr(Lua.LuaToUserdata(state, 1))).Free();
 
         return 0;
     }
@@ -119,7 +119,7 @@ internal static class Metamethods
         var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
         if (members.Length == 0)
         {
-            return LuaModule.LuaError(state, $"Invalid member '{memberName}'");
+            return Lua.LuaError(state, $"Invalid member '{memberName}'");
         }
 
         obj = isStaticSearch ? null : obj;
@@ -146,7 +146,7 @@ internal static class Metamethods
                 try
                 {
                     var wrapper = new MethodWrapper(memberName, objType, obj);
-                    LuaModule.LuaPushCClosure(state, wrapper.Callback, 0);
+                    Lua.LuaPushCClosure(state, wrapper.Callback, 0);
 
                     return 1;
                 }
@@ -360,14 +360,14 @@ internal static class Metamethods
 
     private static int ToString(IntPtr state)
     {
-        var obj = LuaModule.UserdataToNetObject(state, 1);
+        var obj = Lua.UserdataToNetObject(state, 1);
         if (obj == null)
         {
-            LuaModule.LuaPushNil(state);
+            Lua.LuaPushNil(state);
         }
         else
         {
-            LuaModule.LuaPushLString(state, obj.ToString());
+            Lua.LuaPushLString(state, obj.ToString());
         }
 
         return 1;

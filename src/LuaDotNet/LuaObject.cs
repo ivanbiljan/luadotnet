@@ -51,16 +51,16 @@ public abstract class LuaObject : IDisposable
 
     internal virtual void PushToStack(IntPtr state)
     {
-        LuaModule.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
+        PInvoke.Lua.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
     }
 
     private void ReleaseUnmanagedResources()
     {
-        if (Reference == LuaModule.LuaRefNil || Reference == LuaModule.LuaNoRef)
+        if (Reference == PInvoke.Lua.LuaRefNil || Reference == PInvoke.Lua.LuaNoRef)
         {
             return;
         }
 
-        LuaModule.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
+        PInvoke.Lua.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
     }
 }

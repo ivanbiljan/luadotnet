@@ -9,7 +9,7 @@ public sealed class StringParser : ITypeParser
 {
     public object Parse(IntPtr state, int stackIndex)
     {
-        var stringPointer = LuaModule.LuaToLString(state, stackIndex, out var lengthPtr);
+        var stringPointer = Lua.LuaToLString(state, stackIndex, out var lengthPtr);
         var stringBuffer = new byte[(byte) lengthPtr];
         Marshal.Copy(stringPointer, stringBuffer, 0, stringBuffer.Length);
 
@@ -18,6 +18,6 @@ public sealed class StringParser : ITypeParser
 
     public void Push(IntPtr state, object obj)
     {
-        LuaModule.LuaPushLString(state, (string) obj);
+        Lua.LuaPushLString(state, (string) obj);
     }
 }

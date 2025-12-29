@@ -24,10 +24,10 @@ public sealed class LuaContext : IDisposable
     /// </summary>
     public LuaContext(bool openLibs = true)
     {
-        State = LuaModule.LuaLNewState();
+        State = Lua.LuaLNewState();
         if (openLibs)
         {
-            LuaModule.LuaLOpenLibs(State);
+            Lua.LuaLOpenLibs(State);
         }
 
         ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
@@ -96,11 +96,11 @@ public sealed class LuaContext : IDisposable
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        var statePointer = LuaModule.LuaNewThread(State);
+        var statePointer = Lua.LuaNewThread(State);
         luaFunction.PushToStack(State);
-        LuaModule.LuaXMove(State, statePointer, 1);
+        Lua.LuaXMove(State, statePointer, 1);
         var coroutine = (LuaCoroutine) objectMarshal.GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         return coroutine;
     }
@@ -192,9 +192,9 @@ public sealed class LuaContext : IDisposable
         numberOfSeqElements = Math.Max(0, numberOfSeqElements);
         numberOfOtherElements = Math.Max(0, numberOfOtherElements);
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        LuaModule.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
+        Lua.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
         var table = (LuaTable) objectMarshal.GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         return table;
     }
@@ -208,7 +208,7 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="file" /> is <c>null</c>.</exception>
     /// <exception cref="FileNotFoundException"><paramref name="file" /> is invalid or not a .lua file.</exception>
     /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
-    public object[] DoFile(string file, int numberOfResults = LuaModule.LuaMultRet)
+    public object[] DoFile(string file, int numberOfResults = Lua.LuaMultRet)
     {
         if (file == null)
         {
@@ -221,19 +221,19 @@ public sealed class LuaContext : IDisposable
             throw new FileNotFoundException();
         }
 
-        var errorCode = LuaModule.LuaLLoadString(
+        var errorCode = Lua.LuaLLoadString(
             State,
             File.ReadAllText(file).GetEncodedString(Encoding.UTF8)
         );
 
         if (errorCode == LuaErrorCode.LuaOk)
         {
-            return LuaModule.PCallKInternal(State, null, numberOfResults);
+            return Lua.PCallKInternal(State, null, numberOfResults);
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         var errorMessage = (string) objectMarshal.GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
     }
@@ -245,23 +245,23 @@ public sealed class LuaContext : IDisposable
     /// <param name="numberOfResults">The number of results to return.</param>
     /// <returns>The chunk's results.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
-    public object[] DoString(string luaChunk, int numberOfResults = LuaModule.LuaMultRet)
+    public object[] DoString(string luaChunk, int numberOfResults = Lua.LuaMultRet)
     {
         if (luaChunk == null)
         {
             throw new ArgumentNullException(nameof(luaChunk));
         }
 
-        var errorCode = LuaModule.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
+        var errorCode = Lua.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
         if (errorCode == LuaErrorCode.LuaOk)
         {
-            return LuaModule.PCallKInternal(State, numberOfResults: numberOfResults);
+            return Lua.PCallKInternal(State, numberOfResults: numberOfResults);
         }
 
         // Lua pushes an error message in case of errors
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         var errorMessage = (string) objectMarshal.GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
     }
@@ -279,9 +279,9 @@ public sealed class LuaContext : IDisposable
             throw new ArgumentNullException(nameof(name));
         }
 
-        LuaModule.LuaGetGlobal(State, name);
+        Lua.LuaGetGlobal(State, name);
         var obj = ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         return obj;
     }
@@ -342,16 +342,16 @@ public sealed class LuaContext : IDisposable
         }
 
         var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        if (LuaModule.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
+        if (Lua.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
         {
             var errorMessage = (string) objectMarshal.GetObject(State, -1);
-            LuaModule.LuaPop(State, 1);
+            Lua.LuaPop(State, 1);
 
             throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
         }
 
         var function = (LuaFunction) objectMarshal.GetObject(State, -1);
-        LuaModule.LuaPop(State, 1);
+        Lua.LuaPop(State, 1);
 
         return function;
     }
@@ -375,10 +375,10 @@ public sealed class LuaContext : IDisposable
             throw new ArgumentNullException(nameof(method));
         }
 
-        var oldTop = LuaModule.LuaGetTop(State);
+        var oldTop = Lua.LuaGetTop(State);
         var function = CreateFunction(method, target);
         SetGlobal(path, function);
-        LuaModule.LuaSetTop(State, oldTop);
+        Lua.LuaSetTop(State, oldTop);
     }
 
     /// <summary>
@@ -405,11 +405,11 @@ public sealed class LuaContext : IDisposable
         }
 
         ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
-        LuaModule.LuaSetGlobal(State, name);
+        Lua.LuaSetGlobal(State, name);
     }
 
     private void ReleaseUnmanagedResources()
     {
-        LuaModule.LuaClose(State);
+        Lua.LuaClose(State);
     }
 }
