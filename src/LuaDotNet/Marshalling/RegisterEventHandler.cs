@@ -5,20 +5,13 @@ using LuaDotNet.Exceptions;
 
 namespace LuaDotNet.Marshalling;
 
-internal sealed class RegisterEventHandler
+internal sealed class RegisterEventHandler(EventInfo eventInfo, object target)
 {
     // ReSharper disable once CollectionNeverQueried.Local
     private static readonly Dictionary<LuaFunction, Delegate> EventHandlers = new();
 
-    private readonly EventInfo _event;
-    private readonly object _target;
+    private readonly EventInfo _event = eventInfo ?? throw new ArgumentNullException(nameof(eventInfo));
 
-    public RegisterEventHandler(EventInfo eventInfo, object target)
-    {
-        _event = eventInfo ?? throw new ArgumentNullException(nameof(eventInfo));
-        _target = target;
-    }
-    
     public void Add(LuaFunction luaFunction)
     {
         if (luaFunction == null)
@@ -39,7 +32,7 @@ internal sealed class RegisterEventHandler
         var @delegate = Delegate.CreateDelegate(_event.EventHandlerType, luaFunctionWrapper, "HandleEvent");
         try
         {
-            _event.AddEventHandler(_target, @delegate);
+            _event.AddEventHandler(target, @delegate);
             EventHandlers[luaFunction] = @delegate;
         }
         catch (TargetInvocationException ex)
@@ -47,7 +40,7 @@ internal sealed class RegisterEventHandler
             throw new LuaException($"An exception has occured while adding an event handler: {ex}");
         }
     }
-    
+
     public void Remove(LuaFunction luaFunction)
     {
         if (luaFunction == null)
@@ -62,7 +55,7 @@ internal sealed class RegisterEventHandler
 
         try
         {
-            _event.RemoveEventHandler(_target, @delegate);
+            _event.RemoveEventHandler(target, @delegate);
             EventHandlers.Remove(luaFunction);
         }
         catch (TargetInvocationException ex)

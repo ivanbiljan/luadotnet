@@ -11,13 +11,13 @@ public sealed class LuaFunction : LuaObject
 {
     private readonly Lua.LuaCFunction _luaCFunction;
 
-    internal LuaFunction(LuaContext lua, int reference) : base(lua, reference)
+    internal LuaFunction(LuaContext context, int reference) : base(context, reference)
     {
     }
 
-    internal LuaFunction(LuaContext lua, Lua.LuaCFunction luaCFunction) : base(
-        lua,
-        PInvoke.Lua.LuaNoRef
+    internal LuaFunction(LuaContext context, Lua.LuaCFunction luaCFunction) : base(
+        context,
+        Lua.LuaNoRef
     )
     {
         _luaCFunction = luaCFunction ?? throw new ArgumentNullException(nameof(luaCFunction));
@@ -25,9 +25,9 @@ public sealed class LuaFunction : LuaObject
 
     internal override void PushToStack(IntPtr state)
     {
-        if (Reference == PInvoke.Lua.LuaNoRef)
+        if (Reference == Lua.LuaNoRef)
         {
-            PInvoke.Lua.LuaPushCClosure(state, _luaCFunction, 0);
+            Lua.LuaPushCClosure(state, _luaCFunction, 0);
 
             return;
         }
@@ -42,8 +42,8 @@ public sealed class LuaFunction : LuaObject
     /// <returns>The invocation's results.</returns>
     public object[] Call(params object[] arguments)
     {
-        ObjectMarshalPool.GetMarshal(Lua.State).PushToStack(Lua.State, this);
+        ObjectMarshalPool.GetMarshal(Context.State).PushToStack(Context.State, this);
 
-        return PInvoke.Lua.PCallKInternal(Lua.State, arguments);
+        return Lua.PCallKInternal(Context.State, arguments);
     }
 }

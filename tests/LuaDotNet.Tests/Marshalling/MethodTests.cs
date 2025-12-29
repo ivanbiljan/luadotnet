@@ -18,145 +18,123 @@ public class MethodTests
     [Fact]
     public void ExtensionMethod_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:ExtensionMethod('Hello, World')")[0];
+        var result = lua.DoString("return test:ExtensionMethod('Hello, World')")[0];
 
-            Assert.Equal("Hello, World", result);
-        }
+        Assert.Equal("Hello, World", result);
     }
 
     [Fact]
     public void Method1_InsufficientArgs_ThrowsLuaException()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            Assert.Throws<LuaException>(() => lua.DoString("return test:Method1(5)"));
-        }
+        Assert.Throws<LuaException>(() => lua.DoString("return test:Method1(5)"));
     }
 
     [Fact]
     public void Method1_WithOptionalParameter_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal(nameof(Test), typeof(Test));
-            lua.DoString("test = Test()");
+        using var lua = new LuaContext();
+        lua.SetGlobal(nameof(Test), typeof(Test));
+        lua.DoString("test = Test()");
 
-            var result = lua.DoString("return test:Method1(5, 5, false)")[0];
+        var result = lua.DoString("return test:Method1(5, 5, false)")[0];
 
-            Assert.Equal(-1L, result);
-        }
+        Assert.Equal(-1L, result);
     }
 
     [Fact]
     public void Method1_WithoutOptionalParameter_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal(nameof(Test), typeof(Test));
-            lua.DoString("test = Test()");
+        using var lua = new LuaContext();
+        lua.SetGlobal(nameof(Test), typeof(Test));
+        lua.DoString("test = Test()");
 
-            var result = lua.DoString("return test:Method1(5, 5)")[0];
+        var result = lua.DoString("return test:Method1(5, 5)")[0];
 
-            Assert.Equal(10L, result);
-        }
+        Assert.Equal(10L, result);
     }
 
     [Fact]
     public void Method2_ParamsArray_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2(5, 5, 5, 5, 5)")[0];
+        var result = lua.DoString("return test:Method2(5, 5, 5, 5, 5)")[0];
 
-            Assert.Equal(26L, result);
-        }
+        Assert.Equal(26L, result);
     }
 
     [Fact]
     public void Method2_SingleArgBoolean_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2(true)")[0];
+        var result = lua.DoString("return test:Method2(true)")[0];
 
-            Assert.Equal(true, result);
-        }
+        Assert.Equal(true, result);
     }
 
     [Fact]
     public void Method2_SingleArgDouble_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2(5.0)")[0];
+        var result = lua.DoString("return test:Method2(5.0)")[0];
 
-            Assert.Equal(5D, result);
-        }
+        Assert.Equal(5D, result);
     }
 
     [Fact]
     public void Method2_SingleArgInteger_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2(5)")[0];
+        var result = lua.DoString("return test:Method2(5)")[0];
 
-            Assert.Equal(5L, result);
-        }
+        Assert.Equal(5L, result);
     }
 
     [Fact]
     public void Method2_SingleArgString_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2('Hello, World')")[0];
+        var result = lua.DoString("return test:Method2('Hello, World')")[0];
 
-            Assert.Equal("Hello, World", result);
-        }
+        Assert.Equal("Hello, World", result);
     }
 
     [Fact]
     public void Method2_TwoArgs_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("test", new Test());
+        using var lua = new LuaContext();
+        lua.SetGlobal("test", new Test());
 
-            var result = lua.DoString("return test:Method2(5, 6)")[0];
+        var result = lua.DoString("return test:Method2(5, 6)")[0];
 
-            Assert.Equal(11L, result);
-        }
+        Assert.Equal(11L, result);
     }
 
     [Fact]
     public void Method3_OutParameter_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal(nameof(Int32), typeof(int));
+        using var lua = new LuaContext();
+        lua.SetGlobal(nameof(Int32), typeof(int));
 
-            var results = lua.DoString("return Int32.TryParse('5')");
+        var results = lua.DoString("return Int32.TryParse('5')");
 
-            Assert.Equal(true, results[0]);
-            Assert.Equal(5L, results[1]);
-        }
+        Assert.Equal(true, results[0]);
+        Assert.Equal(5L, results[1]);
     }
 
     public class Test

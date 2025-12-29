@@ -34,10 +34,8 @@ public class LuaContextFacts
     [Fact]
     public void DoString_NullChunk_ThrowsArgumentNullException()
     {
-        using (var lua = new LuaContext())
-        {
-            Assert.Throws<ArgumentNullException>(() => lua.DoString(null));
-        }
+        using var lua = new LuaContext();
+        Assert.Throws<ArgumentNullException>(() => lua.DoString(null));
     }
 
     [Fact]
@@ -51,43 +49,34 @@ public class LuaContextFacts
     [Fact]
     public void DoString_VarArg_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            var results = lua.DoString("return 1, 2, 3");
-            Assert.Equal(
-                new object[]
-                {
-                    1L, 2L, 3L
-                },
-                results
-            );
-        }
+        using var lua = new LuaContext();
+        var results = lua.DoString("return 1, 2, 3");
+        Assert.Equal(
+            [
+                1L, 2L, 3L
+            ],
+            results
+        );
     }
 
     [Fact]
     public void GetGlobal_NullName_ThrowsArgumentNullException()
     {
-        using (var lua = new LuaContext())
-        {
-            Assert.Throws<ArgumentNullException>(() => lua.GetGlobal(null));
-        }
+        using var lua = new LuaContext();
+        Assert.Throws<ArgumentNullException>(() => lua.GetGlobal(null));
     }
 
     [Fact]
     public void LoadString_NullChunk_ThrowsArgumentNullException()
     {
-        using (var lua = new LuaContext())
-        {
-            Assert.Throws<ArgumentNullException>(() => lua.LoadString(null));
-        }
+        using var lua = new LuaContext();
+        Assert.Throws<ArgumentNullException>(() => lua.LoadString(null));
     }
 
     [Fact]
     public void SetGlobal_NullName_ThrowsArgumentNullException()
     {
-        using (var lua = new LuaContext())
-        {
-            Assert.Throws<ArgumentNullException>(() => lua.SetGlobal(null, null));
-        }
+        using var lua = new LuaContext();
+        Assert.Throws<ArgumentNullException>(() => lua.SetGlobal(null, null));
     }
 }

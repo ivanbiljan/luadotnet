@@ -25,10 +25,10 @@ internal sealed class MethodWrapper
     public MethodWrapper(MethodInfo method, object target = null)
     {
         _isStatic = true;
-        _methods = new[]
-        {
+        _methods =
+        [
             method
-        };
+        ];
 
         _target = target;
     }

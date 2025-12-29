@@ -8,61 +8,53 @@ public class ArithmeticTests
     [Fact]
     public void Add_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("a", new Fraction(5, 4));
-            lua.SetGlobal("b", new Fraction(1, 2));
+        using var lua = new LuaContext();
+        lua.SetGlobal("a", new Fraction(5, 4));
+        lua.SetGlobal("b", new Fraction(1, 2));
 
-            var result = (Fraction) lua.DoString("return a + b")[0];
+        var result = (Fraction) lua.DoString("return a + b")[0];
 
-            Assert.Equal(14, result.Numerator);
-            Assert.Equal(8, result.Denominator);
-        }
+        Assert.Equal(14, result.Numerator);
+        Assert.Equal(8, result.Denominator);
     }
 
     [Fact]
     public void Divide_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("a", new Fraction(5, 4));
-            lua.SetGlobal("b", new Fraction(1, 2));
+        using var lua = new LuaContext();
+        lua.SetGlobal("a", new Fraction(5, 4));
+        lua.SetGlobal("b", new Fraction(1, 2));
 
-            var result = (Fraction) lua.DoString("return a / b")[0];
+        var result = (Fraction) lua.DoString("return a / b")[0];
 
-            Assert.Equal(10, result.Numerator);
-            Assert.Equal(4, result.Denominator);
-        }
+        Assert.Equal(10, result.Numerator);
+        Assert.Equal(4, result.Denominator);
     }
 
     [Fact]
     public void Multiply_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("a", new Fraction(5, 4));
-            lua.SetGlobal("b", new Fraction(1, 2));
+        using var lua = new LuaContext();
+        lua.SetGlobal("a", new Fraction(5, 4));
+        lua.SetGlobal("b", new Fraction(1, 2));
 
-            var result = (Fraction) lua.DoString("return a * b")[0];
+        var result = (Fraction) lua.DoString("return a * b")[0];
 
-            Assert.Equal(5, result.Numerator);
-            Assert.Equal(8, result.Denominator);
-        }
+        Assert.Equal(5, result.Numerator);
+        Assert.Equal(8, result.Denominator);
     }
 
     [Fact]
     public void Subtract_IsCorrect()
     {
-        using (var lua = new LuaContext())
-        {
-            lua.SetGlobal("a", new Fraction(5, 4));
-            lua.SetGlobal("b", new Fraction(1, 2));
+        using var lua = new LuaContext();
+        lua.SetGlobal("a", new Fraction(5, 4));
+        lua.SetGlobal("b", new Fraction(1, 2));
 
-            var result = (Fraction) lua.DoString("return a - b")[0];
+        var result = (Fraction) lua.DoString("return a - b")[0];
 
-            Assert.Equal(6, result.Numerator);
-            Assert.Equal(8, result.Denominator);
-        }
+        Assert.Equal(6, result.Numerator);
+        Assert.Equal(8, result.Denominator);
     }
 
     private struct Fraction

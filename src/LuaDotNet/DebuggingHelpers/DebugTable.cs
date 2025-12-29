@@ -73,10 +73,9 @@ internal sealed class DebugTable
         return ColumnHeaders.Select((c, ix) =>
             Entities.Select(e => e[ix])
                 .Union(
-                    new[]
-                    {
+                    [
                         ColumnHeaders[ix]
-                    }
+                    ]
                 )
                 .Max(s => s.Length)
         );

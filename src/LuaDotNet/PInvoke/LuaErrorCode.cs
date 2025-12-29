@@ -8,8 +8,8 @@ namespace LuaDotNet.PInvoke;
 public enum LuaErrorCode
 {
     /// <summary>
-    ///     Represents the normal status for a thread. When resuming threads with <see cref="LUA_OK" /> a new coroutine is
-    ///     started, whereas <see cref="LUA_YIELD" /> resumes a couroutine.
+    ///     Represents the normal status for a thread. When resuming threads with <see cref="LuaOk" /> a new coroutine is
+    ///     started, whereas <see cref="LuaYield" /> resumes a couroutine.
     /// </summary>
     LuaOk = 0,
 

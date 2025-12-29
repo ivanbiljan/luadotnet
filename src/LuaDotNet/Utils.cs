@@ -8,11 +8,6 @@ namespace LuaDotNet;
 
 internal static class Utils
 {
-    public static object CoerceObjectMaybe(object obj, Type type)
-    {
-        return TryImplicitConversion(obj, type, out var resultObj) ? resultObj : obj;
-    }
-
     // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
     public static T? PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments)
         where T : MethodBase
@@ -52,7 +47,7 @@ internal static class Utils
 
             if (parameters.Length < arguments.Length)
             {
-                if (parameters.Length != 0 && !parameters[parameters.Length - 1].IsParamsArray())
+                if (parameters.Length != 0 && !parameters[^1].IsParamsArray())
                 {
                     continue;
                 }

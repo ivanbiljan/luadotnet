@@ -6,10 +6,10 @@ using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling;
 
-internal sealed class ObjectMarshal
+internal sealed class ObjectMarshal(LuaContext lua)
 {
     private readonly NetObjectParser _defaultNetObjectParser = new();
-    private readonly LuaContext _lua;
+    private readonly LuaContext _lua = lua ?? throw new ArgumentNullException(nameof(lua));
 
     private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
     {
@@ -27,11 +27,6 @@ internal sealed class ObjectMarshal
         [typeof(bool)] = () => new BooleanParser(),
         [typeof(Array)] = () => new ArrayParser()
     };
-
-    public ObjectMarshal(LuaContext lua)
-    {
-        _lua = lua ?? throw new ArgumentNullException(nameof(lua));
-    }
 
     public object GetObject(IntPtr state, int stackIndex)
     {
@@ -96,7 +91,7 @@ internal sealed class ObjectMarshal
         return objs;
     }
 
-    public void PushToStack(IntPtr state, object obj)
+    public void PushToStack(IntPtr state, object? obj)
     {
         switch (obj)
         {

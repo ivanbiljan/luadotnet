@@ -2,14 +2,9 @@
 
 namespace LuaDotNet.Marshalling.Parsers;
 
-public abstract class TypeParserBase : ITypeParser
+public abstract class TypeParserBase(LuaContext lua) : ITypeParser
 {
-    protected LuaContext LuaContext;
-
-    protected TypeParserBase(LuaContext lua)
-    {
-        LuaContext = lua ?? throw new ArgumentNullException(nameof(lua));
-    }
+    protected LuaContext LuaContext = lua ?? throw new ArgumentNullException(nameof(lua));
 
     public abstract object Parse(IntPtr state, int stackIndex);
 

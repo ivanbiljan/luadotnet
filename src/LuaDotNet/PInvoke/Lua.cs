@@ -15,6 +15,8 @@ namespace LuaDotNet.PInvoke;
 
 internal sealed partial class Lua
 {
+    public delegate int LuaCFunction(IntPtr luaState);
+
     private const string RuntimesDirectory = "runtimes";
     private const string LibraryName = "lua";
 
@@ -134,7 +136,7 @@ internal sealed partial class Lua
 
     internal static object[] PCallKInternal(
         IntPtr state,
-        IReadOnlyCollection<object> arguments = null,
+        IReadOnlyCollection<object>? arguments = null,
         int numberOfResults = LuaMultRet
     )
     {
@@ -169,8 +171,6 @@ internal sealed partial class Lua
 
         return results;
     }
-
-    public delegate int LuaCFunction(IntPtr luaState);
 
     [LibraryImport(LibraryName, EntryPoint = "lua_checkstack")]
     [return: MarshalAs(UnmanagedType.I1)]
@@ -320,7 +320,7 @@ internal sealed partial class Lua
 
     [LibraryImport(LibraryName, EntryPoint = "lua_xmove")]
     public static partial void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
-    
+
     [LibraryImport(LibraryName, EntryPoint = "luaL_error")]
     public static partial int LuaError(IntPtr luaState, [MarshalAs(UnmanagedType.LPStr)] string message);
 }

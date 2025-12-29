@@ -6,22 +6,16 @@ namespace LuaDotNet;
 /// <summary>
 ///     Represents the base class for Lua objects.
 /// </summary>
-public abstract class LuaObject : IDisposable
+public abstract class LuaObject(LuaContext context, int reference) : IDisposable
 {
     private bool _disposed;
 
-    protected LuaObject(LuaContext lua, int reference)
-    {
-        Lua = lua;
-        Reference = reference;
-    }
-
-    protected LuaContext Lua { get; }
+    protected LuaContext Context { get; } = context;
 
     /// <summary>
     ///     Gets the object's reference in the registry.
     /// </summary>
-    public int Reference { get; }
+    public int Reference { get; } = reference;
 
     /// <inheritdoc />
     public void Dispose()
@@ -51,16 +45,16 @@ public abstract class LuaObject : IDisposable
 
     internal virtual void PushToStack(IntPtr state)
     {
-        PInvoke.Lua.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
+        Lua.LuaRawGetI(state, (int) LuaRegistry.RegistryIndex, Reference);
     }
 
     private void ReleaseUnmanagedResources()
     {
-        if (Reference == PInvoke.Lua.LuaRefNil || Reference == PInvoke.Lua.LuaNoRef)
+        if (Reference == Lua.LuaRefNil || Reference == Lua.LuaNoRef)
         {
             return;
         }
 
-        PInvoke.Lua.LuaLUnref(Lua.State, (int) LuaRegistry.RegistryIndex, Reference);
+        Lua.LuaLUnref(Context.State, (int) LuaRegistry.RegistryIndex, Reference);
     }
 }

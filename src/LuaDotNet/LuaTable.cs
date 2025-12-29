@@ -14,15 +14,15 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
 {
     private readonly Dictionary<object, object> _dictionaryCtx = new();
 
-    public LuaTable(LuaContext lua, int reference) : base(lua, reference)
+    public LuaTable(LuaContext context, int reference) : base(context, reference)
     {
-        var objectMarshal = ObjectMarshalPool.GetMarshal(lua.State);
-        PushToStack(Lua.State);
-        PInvoke.Lua.LuaPushNil(Lua.State);
-        while (PInvoke.Lua.LuaNext(Lua.State, -2) != 0)
+        var objectMarshal = ObjectMarshalPool.GetMarshal(context.State);
+        PushToStack(Context.State);
+        Lua.LuaPushNil(Context.State);
+        while (Lua.LuaNext(Context.State, -2) != 0)
         {
-            _dictionaryCtx.Add(objectMarshal.GetObject(lua.State, -2), objectMarshal.GetObject(lua.State, -1));
-            PInvoke.Lua.LuaPop(Lua.State, 1);
+            _dictionaryCtx.Add(objectMarshal.GetObject(context.State, -2), objectMarshal.GetObject(context.State, -1));
+            Lua.LuaPop(Context.State, 1);
         }
     }
 
@@ -45,11 +45,11 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
 
     public bool Remove(object key)
     {
-        var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-        PushToStack(Lua.State);
-        objectMarshal.PushToStack(Lua.State, key);
-        objectMarshal.PushToStack(Lua.State, null);
-        PInvoke.Lua.LuaRawSet(Lua.State, -3);
+        var objectMarshal = ObjectMarshalPool.GetMarshal(Context.State);
+        PushToStack(Context.State);
+        objectMarshal.PushToStack(Context.State, key);
+        objectMarshal.PushToStack(Context.State, null);
+        Lua.LuaRawSet(Context.State, -3);
 
         _dictionaryCtx.Remove(key);
 
@@ -96,11 +96,11 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
                     return;
                 }
 
-                var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-                PushToStack(Lua.State);
-                objectMarshal.PushToStack(Lua.State, key);
-                objectMarshal.PushToStack(Lua.State, value);
-                PInvoke.Lua.LuaSetTable(Lua.State, -3);
+                var objectMarshal = ObjectMarshalPool.GetMarshal(Context.State);
+                PushToStack(Context.State);
+                objectMarshal.PushToStack(Context.State, key);
+                objectMarshal.PushToStack(Context.State, value);
+                Lua.LuaSetTable(Context.State, -3);
                 _dictionaryCtx[key] = value;
             }
             else
@@ -117,25 +117,25 @@ public sealed class LuaTable : LuaObject, IDictionary<object, object>
 
     public void Add(object key, object value)
     {
-        var objectMarshal = ObjectMarshalPool.GetMarshal(Lua.State);
-        PushToStack(Lua.State);
-        objectMarshal.PushToStack(Lua.State, key);
-        objectMarshal.PushToStack(Lua.State, value);
-        PInvoke.Lua.LuaRawSet(Lua.State, -3);
+        var objectMarshal = ObjectMarshalPool.GetMarshal(Context.State);
+        PushToStack(Context.State);
+        objectMarshal.PushToStack(Context.State, key);
+        objectMarshal.PushToStack(Context.State, value);
+        Lua.LuaRawSet(Context.State, -3);
 
         _dictionaryCtx.Add(key, value);
     }
 
     public void Clear()
     {
-        PushToStack(Lua.State);
-        PInvoke.Lua.LuaPushNil(Lua.State);
-        while (PInvoke.Lua.LuaNext(Lua.State, -2) != 0)
+        PushToStack(Context.State);
+        Lua.LuaPushNil(Context.State);
+        while (Lua.LuaNext(Context.State, -2) != 0)
         {
-            PInvoke.Lua.LuaPushValue(Lua.State, -2); // key
-            PInvoke.Lua.LuaPushNil(Lua.State); // value
-            PInvoke.Lua.LuaRawSet(Lua.State, -5); // t[key] = nil
-            PInvoke.Lua.LuaPop(Lua.State, 1); // pop the value, leave the key
+            Lua.LuaPushValue(Context.State, -2); // key
+            Lua.LuaPushNil(Context.State); // value
+            Lua.LuaRawSet(Context.State, -5); // t[key] = nil
+            Lua.LuaPop(Context.State, 1); // pop the value, leave the key
         }
 
         _dictionaryCtx.Clear();

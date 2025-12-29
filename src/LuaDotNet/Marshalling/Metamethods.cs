@@ -230,11 +230,10 @@ internal static class Metamethods
         };
 
         var method = PickOverload(
-            new[]
-            {
+            [
                 firstOperand?.GetType().GetOrCreateMetadata().GetMethods(opMethodName).ElementAtOrDefault(0),
                 secondOperand?.GetType().GetOrCreateMetadata().GetMethods(opMethodName).ElementAtOrDefault(0)
-            },
+            ],
             arguments,
             out _
         );
