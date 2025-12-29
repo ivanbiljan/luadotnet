@@ -38,9 +38,9 @@ internal sealed class MethodWrapper
         var objectMarshal = ObjectMarshalPool.GetMarshal(state);
         var args = objectMarshal.GetObjects(state, _isStatic ? 1 : 2, LuaModule.LuaGetTop(state));
         var method = Utils.PickOverload(_methods, args, out args);
-        if (method == null)
+        if (method is null)
         {
-            throw new LuaException($"Cannot resolve method call: {_methodName}");
+            return LuaModule.LuaError(state, $"Cannot resolve method call {_methodName}");
         }
 
         if (method.IsGenericMethodDefinition)

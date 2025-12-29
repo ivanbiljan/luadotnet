@@ -320,4 +320,7 @@ internal sealed partial class LuaModule
 
     [LibraryImport(LibraryName, EntryPoint = "lua_xmove")]
     public static partial void LuaXMove(IntPtr fromThreadState, IntPtr toThreadState, int nargs);
+    
+    [LibraryImport(LibraryName, EntryPoint = "luaL_error")]
+    public static partial int LuaError(IntPtr luaState, [MarshalAs(UnmanagedType.LPStr)] string message);
 }

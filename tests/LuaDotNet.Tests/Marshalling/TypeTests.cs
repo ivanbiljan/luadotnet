@@ -1,4 +1,5 @@
-﻿using LuaDotNet.Exceptions;
+﻿using System;
+using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using Xunit;
 
@@ -48,7 +49,7 @@ public sealed class TypeTests
         using (var lua = new LuaContext())
         {
             lua.SetGlobal("TestClass", typeof(TestClass));
-
+    
             Assert.Throws<LuaException>(() => lua.DoString("return TestClass.ThisPropertyDoesNotExist"));
         }
     }

@@ -14,7 +14,7 @@ internal static class Utils
     }
 
     // https://docs.microsoft.com/en-us/dotnet/visual-basic/reference/language-specification/overload-resolution
-    public static T PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments)
+    public static T? PickOverload<T>(IEnumerable<T> candidates, object[] arguments, out object[] convertedArguments)
         where T : MethodBase
     {
         var bestExplicitScore = -1D;

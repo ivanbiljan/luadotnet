@@ -119,14 +119,14 @@ internal static class Metamethods
         var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();
         if (members.Length == 0)
         {
-            throw new LuaException($"Invalid member '{memberName}'");
+            return LuaModule.LuaError(state, $"Invalid member '{memberName}'");
         }
 
         obj = isStaticSearch ? null : obj;
         var member = members[0];
         switch (member.MemberType)
         {
-            case MemberTypes.Event: // TODO
+            case MemberTypes.Event:
                 objectMarshal.PushToStack(state, new RegisterEventHandler((EventInfo) member, obj));
 
                 break;

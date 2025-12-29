@@ -11,5 +11,5 @@ public sealed class LuaGlobalAttribute : Attribute
     /// <summary>
     ///     Gets or sets the global name override.
     /// </summary>
-    public string NameOverride { get; set; }
+    public string? NameOverride { get; set; }
 }
