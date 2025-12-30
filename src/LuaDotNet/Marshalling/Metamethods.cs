@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
 using LuaDotNet.PInvoke;
 using static LuaDotNet.Utils;
@@ -40,26 +39,18 @@ internal static class Metamethods
             ["__div"] = DivideObjects
         };
 
-    public static void CreateMetatables(IntPtr state)
+    public static void CreateMetatables(IntPtr state, ObjectMarshal marshal)
     {
-        Lua.LuaLNewMetatable(state, NetTypeMetatable);
-        PushMetamethod("__gc", TypeMetamethods["__gc"]);
-        PushMetamethod("__tostring", TypeMetamethods["__tostring"]);
-        PushMetamethod("__call", TypeMetamethods["__call"]);
-        PushMetamethod("__index", TypeMetamethods["__index"]);
-        PushMetamethod("__newindex", TypeMetamethods["__newindex"]);
-        Lua.LuaPop(state, 1);
+        var gcHandle = GCHandle.Alloc(marshal);
 
         Lua.LuaLNewMetatable(state, NetObjectMetatable);
-        PushMetamethod("__gc", ObjectMetamethods["__gc"]);
-        PushMetamethod("__tostring", ObjectMetamethods["__tostring"]);
-        PushMetamethod("__index", ObjectMetamethods["__index"]);
-        PushMetamethod("__newindex", ObjectMetamethods["__newindex"]);
-        PushMetamethod("__add", ObjectMetamethods["__add"]);
-        PushMetamethod("__sub", ObjectMetamethods["__sub"]);
-        PushMetamethod("__mul", ObjectMetamethods["__mul"]);
-        PushMetamethod("__div", ObjectMetamethods["__div"]);
-        Lua.LuaPop(state, 1);
+
+        foreach (var kv in TypeMetamethods)
+        {
+            Lua.LuaPushLightUserdata(state, GCHandle.ToIntPtr(gcHandle));
+            Lua.LuaPushCClosure(state, kv.Value, 1); // 1 upvalue = marshal
+            Lua.luasetfield(state, -2, kv.Key);
+        }
 
         void PushMetamethod(string metamethod, Lua.LuaCFunction luaCFunction)
         {
@@ -113,7 +104,7 @@ internal static class Metamethods
 
     private static int GetMember(IntPtr state, object obj, string memberName, bool isStaticSearch)
     {
-        var objectMarshal = ObjectMarshalPool.GetMarshal(state);
+        var objectMarshal = .GetMarshal(state);
         var objType = obj is Type type ? type : obj.GetType();
         var typeMetadata = objType.GetOrCreateMetadata();
         var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();

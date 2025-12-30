@@ -9,10 +9,7 @@ internal sealed class DebugTable
 {
     public DebugTable(params string[] headers)
     {
-        if (headers == null)
-        {
-            throw new ArgumentNullException(nameof(headers));
-        }
+        ArgumentNullException.ThrowIfNull(headers);
 
         if (!headers.Any())
         {
@@ -28,10 +25,7 @@ internal sealed class DebugTable
 
     public void AddRow(params object[] values)
     {
-        if (values == null)
-        {
-            throw new ArgumentNullException(nameof(values));
-        }
+        ArgumentNullException.ThrowIfNull(values);
 
         if (values.Length > ColumnHeaders.Count)
         {

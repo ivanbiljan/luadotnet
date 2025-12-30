@@ -6,10 +6,10 @@ using LuaDotNet.PInvoke;
 
 namespace LuaDotNet.Marshalling;
 
-internal sealed class ObjectMarshal(LuaContext lua)
+internal sealed class ObjectMarshal(LuaContext context)
 {
+    private readonly LuaContext _context = context ?? throw new ArgumentNullException(nameof(context));
     private readonly NetObjectParser _defaultNetObjectParser = new();
-    private readonly LuaContext _lua = lua ?? throw new ArgumentNullException(nameof(lua));
 
     private readonly IDictionary<Type, Func<ITypeParser>> _typeParsers = new Dictionary<Type, Func<ITypeParser>>
     {
@@ -51,13 +51,13 @@ internal sealed class ObjectMarshal(LuaContext lua)
 
                 break;
             case LuaType.Table:
-                return new LuaTable(_lua, GetRegistryReference());
+                return new LuaTable(_context, GetRegistryReference());
             case LuaType.Function:
-                return new LuaFunction(_lua, GetRegistryReference());
+                return new LuaFunction(_context, GetRegistryReference());
             case LuaType.Userdata:
                 return Lua.UserdataToNetObject(state, stackIndex);
             case LuaType.Thread:
-                return new LuaCoroutine(_lua, GetRegistryReference());
+                return new LuaCoroutine(_context, GetRegistryReference());
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -122,10 +122,7 @@ internal sealed class ObjectMarshal(LuaContext lua)
 
     public void RegisterTypeParser(Type type, ITypeParser typeParser)
     {
-        if (typeParser == null)
-        {
-            throw new ArgumentNullException(nameof(typeParser));
-        }
+        ArgumentNullException.ThrowIfNull(typeParser);
 
         _typeParsers[type] = () => typeParser;
     }

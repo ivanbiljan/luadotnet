@@ -17,8 +17,6 @@ namespace LuaDotNet;
 /// </summary>
 public sealed class LuaContext : IDisposable
 {
-    private readonly ObjectMarshal _objectMarshal;
-
     /// <summary>
     ///     Initializes a new instance of the <see cref="LuaContext" /> class.
     /// </summary>
@@ -30,7 +28,7 @@ public sealed class LuaContext : IDisposable
             Lua.LuaLOpenLibs(State);
         }
 
-        ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
+        ObjectMarshal = new ObjectMarshal(this);
         Metamethods.CreateMetatables(State);
 
         RegisterFunction(
@@ -62,6 +60,8 @@ public sealed class LuaContext : IDisposable
 //            }
     }
 
+    internal ObjectMarshal ObjectMarshal { get; }
+
     /// <summary>
     ///     Gets the Lua state associated with this context.
     /// </summary>
@@ -90,16 +90,12 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="luaFunction" /> is <c>null</c>.</exception>
     public LuaCoroutine CreateCoroutine(LuaFunction luaFunction)
     {
-        if (luaFunction == null)
-        {
-            throw new ArgumentNullException(nameof(luaFunction));
-        }
+        ArgumentNullException.ThrowIfNull(luaFunction);
 
-        var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         var statePointer = Lua.LuaNewThread(State);
         luaFunction.PushToStack(State);
         Lua.LuaXMove(State, statePointer, 1);
-        var coroutine = (LuaCoroutine) objectMarshal.GetObject(State, -1);
+        var coroutine = (LuaCoroutine) ObjectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return coroutine;
@@ -113,12 +109,9 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="delegate" /> is <c>null</c>.</exception>
     public LuaFunction CreateFunction(Delegate @delegate)
     {
-        if (@delegate == null)
-        {
-            throw new ArgumentNullException(nameof(@delegate));
-        }
+        ArgumentNullException.ThrowIfNull(@delegate);
 
-        return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target);
+        return CreateFunction(@delegate.GetMethodInfo(), @delegate.Target!);
     }
 
     /// <summary>
@@ -130,54 +123,8 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="methodInfo" /> is <c>null</c>.</exception>
     public LuaFunction CreateFunction(MethodInfo methodInfo, object target = null)
     {
-        if (methodInfo == null)
-        {
-            throw new ArgumentNullException(nameof(methodInfo));
-        }
+        ArgumentNullException.ThrowIfNull(methodInfo);
 
-//            var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-//            var objectMarshalGetObjectMethod = typeof(ObjectMarshal).GetMethod("GetObject");
-//            var objectMarshalPushObjectMethod = typeof(ObjectMarshal).GetMethod("PushToStack");
-//
-//            var luaStateParameter = Expression.Parameter(typeof(IntPtr));
-//            var argumentExpressions = new List<Expression>();
-//
-//            var methodParameters = methodInfo.GetParameters();
-//            for (var i = 0; i < methodParameters.Length; ++i) {
-//                var parameter = methodParameters[i];
-//                var getObjectCallExpression = Expression.Call(
-//                    Expression.Constant(objectMarshal),
-//                    objectMarshalGetObjectMethod,
-//                    luaStateParameter,
-//                    Expression.Constant(i + 1));
-//                var coerceObjectCallExpression = Expression.Call(
-//                    typeof(Utils).GetMethod("CoerceObjectMaybe"),
-//                    getObjectCallExpression,
-//                    Expression.Constant(parameter.ParameterType));
-//                argumentExpressions.Add(Expression.Convert(coerceObjectCallExpression, parameter.ParameterType));
-//            }
-//
-//            var methodCallExpression = Expression.Call(Expression.Convert(Expression.Constant(target), methodInfo.DeclaringType),
-//                methodInfo, argumentExpressions);
-//            var functionBody = new List<Expression>();
-//            if (methodInfo.ReturnType == typeof(void)) {
-//                functionBody.Add(methodCallExpression);
-//                functionBody.Add(Expression.Constant(0));
-//            }
-//            else {
-//                // TODO push ref/out parameters as well?
-//                // In case of a non-void method we have to push the result of the method call to Lua's stack
-//                functionBody.Add(Expression.Call(
-//                    Expression.Constant(objectMarshal),
-//                    objectMarshalPushObjectMethod,
-//                    luaStateParameter,
-//                    Expression.Convert(methodCallExpression, typeof(object))));
-//                functionBody.Add(Expression.Constant(1));
-//            }
-//
-//            var functionExpression = Expression.Block(functionBody.ToArray());
-//            var luaCFunction = Expression.Lambda<LuaModule.LuaCFunction>(functionExpression, luaStateParameter)
-//                .Compile();
         return new LuaFunction(this, new MethodWrapper(methodInfo, target).Callback);
     }
 
@@ -191,9 +138,8 @@ public sealed class LuaContext : IDisposable
     {
         numberOfSeqElements = Math.Max(0, numberOfSeqElements);
         numberOfOtherElements = Math.Max(0, numberOfOtherElements);
-        var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         Lua.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
-        var table = (LuaTable) objectMarshal.GetObject(State, -1);
+        var table = (LuaTable) ObjectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return table;
@@ -210,10 +156,7 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="LuaException">Something went wrong while executing the file.</exception>
     public object[] DoFile(string file, int numberOfResults = Lua.LuaMultRet)
     {
-        if (file == null)
-        {
-            throw new ArgumentNullException(nameof(file));
-        }
+        ArgumentNullException.ThrowIfNull(file);
 
         if (!File.Exists(file) ||
             !Path.GetExtension(file).Equals(".lua", StringComparison.InvariantCultureIgnoreCase))
@@ -231,8 +174,7 @@ public sealed class LuaContext : IDisposable
             return Lua.PCallKInternal(State, null, numberOfResults);
         }
 
-        var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        var errorMessage = (string) objectMarshal.GetObject(State, -1);
+        var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
@@ -247,10 +189,7 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="luaChunk" /> is <c>null</c>.</exception>
     public object[] DoString(string luaChunk, int numberOfResults = Lua.LuaMultRet)
     {
-        if (luaChunk == null)
-        {
-            throw new ArgumentNullException(nameof(luaChunk));
-        }
+        ArgumentNullException.ThrowIfNull(luaChunk);
 
         var errorCode = Lua.LuaLLoadString(State, luaChunk.GetEncodedString(Encoding.UTF8));
         if (errorCode == LuaErrorCode.LuaOk)
@@ -259,8 +198,7 @@ public sealed class LuaContext : IDisposable
         }
 
         // Lua pushes an error message in case of errors
-        var objectMarshal = ObjectMarshalPool.GetMarshal(State);
-        var errorMessage = (string) objectMarshal.GetObject(State, -1);
+        var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
@@ -272,15 +210,12 @@ public sealed class LuaContext : IDisposable
     /// <param name="name">The name, which must not be <c>null</c>.</param>
     /// <returns>The value.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
-    public object GetGlobal(string name)
+    public object? GetGlobal(string name)
     {
-        if (name == null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentNullException.ThrowIfNull(name);
 
         Lua.LuaGetGlobal(State, name);
-        var obj = ObjectMarshalPool.GetMarshal(State).GetObject(State, -1);
+        var obj = ObjectMarshal.GetObject(State, -1);
         Lua.LuaPop(State, 1);
 
         return obj;
@@ -336,21 +271,17 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="LuaException">Something went wrong while loading the chunk.</exception>
     public LuaFunction LoadString(string luaChunk)
     {
-        if (luaChunk == null)
-        {
-            throw new ArgumentNullException(nameof(luaChunk));
-        }
+        ArgumentNullException.ThrowIfNull(luaChunk);
 
-        var objectMarshal = ObjectMarshalPool.GetMarshal(State);
         if (Lua.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
         {
-            var errorMessage = (string) objectMarshal.GetObject(State, -1);
+            var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
             Lua.LuaPop(State, 1);
 
             throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
         }
 
-        var function = (LuaFunction) objectMarshal.GetObject(State, -1);
+        var function = (LuaFunction) ObjectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return function;
@@ -365,15 +296,9 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="path" /> or <paramref name="method" /> is <c>null</c>.</exception>
     public void RegisterFunction(string path, MethodInfo method, object target)
     {
-        if (path == null)
-        {
-            throw new ArgumentNullException(nameof(path));
-        }
+        ArgumentNullException.ThrowIfNull(path);
 
-        if (method == null)
-        {
-            throw new ArgumentNullException(nameof(method));
-        }
+        ArgumentNullException.ThrowIfNull(method);
 
         var oldTop = Lua.LuaGetTop(State);
         var function = CreateFunction(method, target);
@@ -388,7 +313,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
     public void RegisterTypeParser(Type type, ITypeParser typeParser)
     {
-        ObjectMarshalPool.GetMarshal(State).RegisterTypeParser(type, typeParser);
+        ObjectMarshal.RegisterTypeParser(type, typeParser);
     }
 
     /// <summary>
@@ -399,18 +324,19 @@ public sealed class LuaContext : IDisposable
     /// <exception cref="ArgumentNullException"><paramref name="name" /> is <c>null</c>.</exception>
     public void SetGlobal(string name, object value)
     {
-        if (name == null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        ArgumentNullException.ThrowIfNull(name);
 
-        ObjectMarshalPool.GetMarshal(State).PushToStack(State, value);
+        ObjectMarshal.PushToStack(State, value);
         Lua.LuaSetGlobal(State, name);
     }
 
     private void ReleaseUnmanagedResources()
     {
-        ObjectMarshalPool.Remove(State);
+        if (State == IntPtr.Zero)
+        {
+            return;
+        }
+
         Lua.LuaClose(State);
     }
 }

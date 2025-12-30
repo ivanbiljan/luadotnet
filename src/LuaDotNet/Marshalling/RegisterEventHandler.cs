@@ -14,10 +14,7 @@ internal sealed class RegisterEventHandler(EventInfo eventInfo, object target)
 
     public void Add(LuaFunction luaFunction)
     {
-        if (luaFunction == null)
-        {
-            throw new ArgumentNullException(nameof(luaFunction));
-        }
+        ArgumentNullException.ThrowIfNull(luaFunction);
 
         var eventHandlerType = _event.EventHandlerType;
         if (eventHandlerType != typeof(EventHandler) && eventHandlerType != typeof(EventHandler<>))
@@ -43,10 +40,7 @@ internal sealed class RegisterEventHandler(EventInfo eventInfo, object target)
 
     public void Remove(LuaFunction luaFunction)
     {
-        if (luaFunction == null)
-        {
-            throw new ArgumentNullException(nameof(luaFunction));
-        }
+        ArgumentNullException.ThrowIfNull(luaFunction);
 
         if (!EventHandlers.TryGetValue(luaFunction, out var @delegate))
         {
