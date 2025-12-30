@@ -1,4 +1,5 @@
 ﻿using System;
+using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet;
@@ -41,7 +42,7 @@ public sealed class LuaFunction : LuaObject
     /// <returns>The invocation's results.</returns>
     public object[] Call(params object[] arguments)
     {
-        Context.ObjectMarshal.PushToStack(Context.State, this);
+        ObjectMarshalPool.GetMarshal(Context.State).PushToStack(Context.State, this);
 
         return Lua.PCallKInternal(Context.State, arguments);
     }

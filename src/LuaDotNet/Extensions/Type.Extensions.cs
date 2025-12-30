@@ -45,7 +45,7 @@ public static class TypeExtensions
             if (!MetadataCache.TryGetValue(type, out var metadata))
             {
                 metadata = TypeMetadata.Create(type);
-                MetadataCache.Add(type, metadata);
+                MetadataCache.AddOrUpdate(type, metadata);
             }
 
             return metadata;

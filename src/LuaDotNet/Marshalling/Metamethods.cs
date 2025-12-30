@@ -39,18 +39,23 @@ internal static class Metamethods
             ["__div"] = DivideObjects
         };
 
-    public static void CreateMetatables(IntPtr state, ObjectMarshal marshal)
+    public static void CreateMetatables(IntPtr state)
     {
-        var gcHandle = GCHandle.Alloc(marshal);
-
-        Lua.LuaLNewMetatable(state, NetObjectMetatable);
-
+        Lua.LuaLNewMetatable(state, NetTypeMetatable);
         foreach (var kv in TypeMetamethods)
         {
-            Lua.LuaPushLightUserdata(state, GCHandle.ToIntPtr(gcHandle));
-            Lua.LuaPushCClosure(state, kv.Value, 1); // 1 upvalue = marshal
-            Lua.luasetfield(state, -2, kv.Key);
+            PushMetamethod(kv.Key, kv.Value);
         }
+        
+        Lua.LuaPop(state, 1);
+        
+        Lua.LuaLNewMetatable(state, NetObjectMetatable);
+        foreach (var kv in ObjectMetamethods)
+        {
+            PushMetamethod(kv.Key, kv.Value);
+        }
+        
+        Lua.LuaPop(state, 1);
 
         void PushMetamethod(string metamethod, Lua.LuaCFunction luaCFunction)
         {
@@ -104,7 +109,7 @@ internal static class Metamethods
 
     private static int GetMember(IntPtr state, object obj, string memberName, bool isStaticSearch)
     {
-        var objectMarshal = .GetMarshal(state);
+        var objectMarshal = ObjectMarshalPool.GetMarshal(state);
         var objType = obj is Type type ? type : obj.GetType();
         var typeMetadata = objType.GetOrCreateMetadata();
         var members = typeMetadata.GetMembers(memberName, !isStaticSearch).ToArray();

@@ -17,6 +17,8 @@ namespace LuaDotNet;
 /// </summary>
 public sealed class LuaContext : IDisposable
 {
+    private readonly ObjectMarshal _objectMarshal;
+    
     /// <summary>
     ///     Initializes a new instance of the <see cref="LuaContext" /> class.
     /// </summary>
@@ -28,7 +30,7 @@ public sealed class LuaContext : IDisposable
             Lua.LuaLOpenLibs(State);
         }
 
-        ObjectMarshal = new ObjectMarshal(this);
+        ObjectMarshalPool.AddMarshal(this, _objectMarshal = new ObjectMarshal(this));
         Metamethods.CreateMetatables(State);
 
         RegisterFunction(
@@ -59,8 +61,6 @@ public sealed class LuaContext : IDisposable
 //                }
 //            }
     }
-
-    internal ObjectMarshal ObjectMarshal { get; }
 
     /// <summary>
     ///     Gets the Lua state associated with this context.
@@ -95,7 +95,7 @@ public sealed class LuaContext : IDisposable
         var statePointer = Lua.LuaNewThread(State);
         luaFunction.PushToStack(State);
         Lua.LuaXMove(State, statePointer, 1);
-        var coroutine = (LuaCoroutine) ObjectMarshal.GetObject(State, -1)!;
+        var coroutine = (LuaCoroutine) _objectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return coroutine;
@@ -139,7 +139,7 @@ public sealed class LuaContext : IDisposable
         numberOfSeqElements = Math.Max(0, numberOfSeqElements);
         numberOfOtherElements = Math.Max(0, numberOfOtherElements);
         Lua.LuaCreateTable(State, numberOfSeqElements, numberOfOtherElements);
-        var table = (LuaTable) ObjectMarshal.GetObject(State, -1)!;
+        var table = (LuaTable) _objectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return table;
@@ -174,7 +174,7 @@ public sealed class LuaContext : IDisposable
             return Lua.PCallKInternal(State, null, numberOfResults);
         }
 
-        var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
+        var errorMessage = (string) _objectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
@@ -198,7 +198,7 @@ public sealed class LuaContext : IDisposable
         }
 
         // Lua pushes an error message in case of errors
-        var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
+        var errorMessage = (string) _objectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         throw new LuaException($"[{errorCode}]: {errorMessage}");
@@ -215,7 +215,7 @@ public sealed class LuaContext : IDisposable
         ArgumentNullException.ThrowIfNull(name);
 
         Lua.LuaGetGlobal(State, name);
-        var obj = ObjectMarshal.GetObject(State, -1);
+        var obj = _objectMarshal.GetObject(State, -1);
         Lua.LuaPop(State, 1);
 
         return obj;
@@ -275,13 +275,13 @@ public sealed class LuaContext : IDisposable
 
         if (Lua.LuaLLoadString(State, Encoding.UTF8.GetBytes(luaChunk)) != LuaErrorCode.LuaOk)
         {
-            var errorMessage = (string) ObjectMarshal.GetObject(State, -1)!;
+            var errorMessage = (string) _objectMarshal.GetObject(State, -1)!;
             Lua.LuaPop(State, 1);
 
             throw new LuaException($"An exception has occured while creating a function: {errorMessage}");
         }
 
-        var function = (LuaFunction) ObjectMarshal.GetObject(State, -1)!;
+        var function = (LuaFunction) _objectMarshal.GetObject(State, -1)!;
         Lua.LuaPop(State, 1);
 
         return function;
@@ -313,7 +313,7 @@ public sealed class LuaContext : IDisposable
     /// <param name="typeParser">The parser, which must not be <c>null</c>.</param>
     public void RegisterTypeParser(Type type, ITypeParser typeParser)
     {
-        ObjectMarshal.RegisterTypeParser(type, typeParser);
+        _objectMarshal.RegisterTypeParser(type, typeParser);
     }
 
     /// <summary>
@@ -326,7 +326,7 @@ public sealed class LuaContext : IDisposable
     {
         ArgumentNullException.ThrowIfNull(name);
 
-        ObjectMarshal.PushToStack(State, value);
+        _objectMarshal.PushToStack(State, value);
         Lua.LuaSetGlobal(State, name);
     }
 

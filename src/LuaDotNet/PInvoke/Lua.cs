@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using LuaDotNet.Exceptions;
 using LuaDotNet.Extensions;
+using LuaDotNet.Marshalling;
 using LuaInteger = long;
 
 #pragma warning disable 649

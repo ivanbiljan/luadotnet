@@ -1,5 +1,6 @@
 ﻿using System;
 using LuaDotNet.Exceptions;
+using LuaDotNet.Marshalling;
 using LuaDotNet.PInvoke;
 
 namespace LuaDotNet;
